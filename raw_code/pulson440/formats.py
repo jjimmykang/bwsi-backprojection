@@ -21,16 +21,16 @@ import numpy as np
 from pulson440.constants import REC_ANTENNA_MODE, REC_PERSIST_FLAG, REC_SCAN_RES, RESERVED_VAL, \
     NOT_IMPLEMENTED_VAL
 
-# Formats of various messages between host and radar. Each one is defined by a message type and a
+# Formats of various messages between host and radar. Each one is defined by a message type and a 
 # packet definition. A packet definition is an order dictionary specifying the order of the packet
-# fields. The values in these dictionaries depend on whether the message is for host to radar
+# fields. The values in these dictionaries depend on whether the message is for host to radar 
 # messages or for radar to host messages.
-#
-# For host to radar messages each key's value is a 2 element list where the first element is the
-# data type and the second value is the default value. If the default value is None then this part
+# 
+# For host to radar messages each key's value is a 2 element list where the first element is the 
+# data type and the second value is the default value. If the default value is None then this part 
 # of the packet must be user defined otherwise the default value is used.
 #
-# For radar to host messages each key's value is the data type. This difference in format is to
+# For radar to host messages each key's value is the data type. This difference in format is to 
 # ensure the right message format is used for the right direction of communication.
 
 # Set radar configuration request; host to radar
@@ -55,7 +55,6 @@ MRM_SET_CONFIG_REQUEST = {'message_type': 4097, # Message type
                                   ('tx_gain_ind', [np.dtype(np.uint8), None]), # Transmit gain index
                                   ('code_channel', [np.dtype(np.uint8), None]), # Code channel
                                   ('persist_flag', [np.dtype(np.uint8), REC_PERSIST_FLAG])])} # Persist flag
-
 MRM_SET_CONFIG_REQUEST['packet_length'] = sum( # Packet length (bytes))
         [value[0].itemsize for value in MRM_SET_CONFIG_REQUEST['packet_def'].values()])
 
@@ -100,7 +99,6 @@ MRM_GET_CONFIG_CONFIRM = {'message_type': 4354, # Message type
                                   ('persist_flag', np.dtype(np.uint8)), # Persist flag
                                   ('timestamp', np.dtype(np.uint32)), # Time since boot (ms)
                                   ('status', np.dtype(np.uint32))])} # Status
-
 MRM_GET_CONFIG_CONFIRM['packet_length'] = sum( # Packet length (bytes))
         [value.itemsize for value in MRM_GET_CONFIG_CONFIRM['packet_def'].values()])
 
@@ -120,7 +118,7 @@ MRM_CONTROL_CONFIRM = {'message_type': 4355, # Message type
                        'packet_def': OrderedDict([
                                ('message_type', np.dtype(np.uint16)), # Message type
                                ('message_id', np.dtype(np.uint16)), # Message ID
-                               ('status', np.dtype(np.uint32))])} # Status
+                               ('status', np.dtype(np.uint32))])} # Status 
 MRM_CONTROL_CONFIRM['packet_length'] = sum( # Packet length (bytes))
         [value.itemsize for value in MRM_CONTROL_CONFIRM['packet_def'].values()])
 
@@ -165,38 +163,3 @@ MRM_SCAN_INFO = {'message_type': 61953, # Message type
                          ('scan_data', np.dtype(np.int32))])} # Scan data
 MRM_SCAN_INFO['packet_length'] = sum( # Packet length (bytes))
         [value.itemsize for value in MRM_SCAN_INFO['packet_def'].values()])
-
-# Status info request; host to radar
-MRM_GET_STATUSINFO_REQUEST = {'message_type': 61441,
-                              'packet_def' : OrderedDict([
-                              ('message_type', np.dtype(np.uint16)),
-                              ('message_id', np.dtype(np.uint16))
-                              ])}
-MRM_GET_STATUSINFO_REQUEST['packet_length'] = sum(
-        [value.itemsize for value in MRM_GET_STATUSINFO_REQUEST['packet_def'].values()])
-
-MRM_GET_STATUSINFO_CONFIRM = {'message_type': 61697,
-                              'packet_def' : OrderedDict([
-                              ('message_type', np.dtype(np.uint16)),
-                              ('message_id', np.dtype(np.uint16)),
-                              ('mrm_version_major', np.dtype(np.uint8)),
-                              ('mrm_version_minor', np.dtype(np.uint8)),
-                              ('mrm_version_build', np.dtype(np.uint16)),
-                              ('uwb_kernel_major', np.dtype(np.uint8)),
-                              ('uwb_kernel_minor', np.dtype(np.uint8)),
-                              ('uwb_kernel_version', np.dtype(np.uint16)),
-                              ('fpga_firmware_version', np.dtype(np.uint8)),
-                              ('fpga_firmware_year', np.dtype(np.uint8)),
-                              ('fpga_firmware_month', np.dtype(np.uint8)),
-                              ('fpga_firmware_day', np.dtype(np.uint8)),
-                              ('serial_number', np.dtype(np.uint32)),
-                              ('board_revision', np.dtype(np.uint8)),
-                              ('bit_test_result', np.dtype(np.uint8)),
-                              ('board_type', np.dtype(np.uint8)),
-                              ('transmitter_configuration', np.dtype(np.uint8)),
-                              ('temperature', np.dtype(np.int32)),
-                              ('pkg_version', type(str)),
-                              ('status', np.dtype(np.uint32))
-                              ])}
-MRM_GET_STATUSINFO_CONFIRM['packet_length'] = sum(
-            [value.itemsize for value in MRM_GET_STATUSINFO_CONFIRM['packet_def'].values()])

@@ -32,62 +32,70 @@ except Exception as e:
     print(e)
     logger = setup_logger(name=DEFAULT_LOGGER_NAME, config=DEFAULT_LOGGER_CONFIG)
 
-def parse_args():
-    '''Parses command line arguments.
-
+def parse_args(args):
+    """Input argument parser.
+    
+    Args:
+        args (list)
+            Input arguments as taken from command line execution via sys.argv[1:].
+    
     Returns:
-        parsed_args(dictionary)
-            command line arguments parsed
-    '''
-    # Set up parser for command line arguments
-    parser = argparse.ArgumentParser(description='Pulson440 Radar software')
-    parser.add_argument('settings_file_path', type=str, help='Path for the settings file.')
-    parser.add_argument('scan_data_filename', type=str, help='Filename of scan data.')
-    parser.add_argument('scan_count', type=int, help='Scancount.')
-
-    # TODO: Code a more foolproof boolean input later
-    parser.add_argument('return_data', type=int, help='1 for True, 0 for False')
-
-    args = parser.parse_args()
-    parsed_args['settings_file_path'] = args.settings_file_path
-    parsed_args['scan_data_filename'] = args.scan_data_filename
-    parsed_args['scan_count'] = args.scan_count
-
-    if args.return_data == 1:
-        parsed_args['return_data'] = True
-    elif args.return_data == 0:
-        parsed_args['return_data'] = False
-
+        parsed_args (namespace)
+            Parsed arguments.
+            
+    Raises:
+        TODO: Update w/ appropriate error cases.
+    """
+    # Define argument parser
+    # TODO: Insert argument parser; recommend usage of argparse library,
+    # https://docs.python.org/3.5/library/argparse.html)
+    parsed_args = None
+    
+    # List of arguments needed
+    # settings_file
+    # scan_data_filename
+    # scan_count
+    # return_data
+    
+    
+    # Perform any needed additional checks and modifcation of parsed arguments
+    # TODO: Insert appropriate code here
+    if parsed_args is None:
+        logger.info()
+    
     return parsed_args
 
-def main():
+def main(args):
     """Main execution method to command radar to collect data.
-
+    
+    Args:
+        args (list)
+            Input arguments as taken from command line execution via sys.argv[1:].
+    
     Returns:
         data (str)
-            Data read from the radar; needs to unpacked to properly access scan information. Will
+            Data read from the radar; needs to unpacked to properly access scan information. Will 
             only be non-empty if return_data input flag is set to True.
-
+    
     Raises:
         # TODO: Update w/ appropriate error cases.
     """
     logger.info('Starting radar data collection process...')
 
-
-    # Fetch/Parse input arguments
-    parsed_args = parse_args()
+    # Parse input arguments
+    parsed_args = parse_args(args)
     logger.debug('Input arguments are --> {0}'.format(parsed_args))
 
     # Initialize output
     data = None
-
+    
     try:
         # Initialize radar
         radar = PulsON440(logger=logger)
-
-        # TODO: Insert appropriate code that connects to radar, gets user settings, sets radar
+        
+        # TODO: Insert appropriate code that connects to radar, gets user settings, sets radar 
         # configuration, commands appropriate collection, and returns the collected data
-
+        
         radar.connect()
         radar.read_settings_file(settings_file=parsed_args.settings_file)
         radar.set_radar_config()
@@ -101,14 +109,15 @@ def main():
 
     except Exception:
         logger.exception('Fatal error encountered!')
-
+        
     # Disconnect radar and close logger
     finally:
         radar.disconnect()
         close_logger(logger)
-
+        
     return data
-
+    
 if __name__ == '__main__':
     """Standard Python alias for command line execution."""
-    main()
+    main(sys.argv[1:])
+    

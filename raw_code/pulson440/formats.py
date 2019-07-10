@@ -195,7 +195,7 @@ MRM_GET_STATUSINFO_CONFIRM = {'message_type': 61697,
                               ('board_type', np.dtype(np.uint8)),
                               ('transmitter_configuration', np.dtype(np.uint8)),
                               ('temperature', np.dtype(np.int32)),
-                              ('pkg_version', type(str)),
+                              ('pkg_version', ''),
                               ('status', np.dtype(np.uint32))
                               ])}
 MRM_GET_STATUSINFO_CONFIRM['packet_length'] = sum(

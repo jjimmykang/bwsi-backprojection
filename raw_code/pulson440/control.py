@@ -32,114 +32,80 @@ except Exception as e:
     print(e)
     logger = setup_logger(name=DEFAULT_LOGGER_NAME, config=DEFAULT_LOGGER_CONFIG)
 
-def parse_args(args):
-    """Input argument parser.
-    
-    Args:
-        args (list)
-            Input arguments as taken from command line execution via sys.argv[1:].
-    
+def parse_args():
+    '''Parses command line arguments.
     Returns:
-        parsed_args (namespace)
-            Parsed arguments.
-            
-    Raises:
-        RuntimeError - too many arguments provided
-        TODO: Update w/ appropriate error cases.
-    """
-    # List of arguments needed
+        parsed_args(dictionary)
+            command line arguments parsed
+    '''
+    # Set up parser for command line arguments
+    parser = argparse.ArgumentParser(description='Pulson440 Radar software')
+    parser.add_argument('settings_file_path', type=str, help='Path for the settings file.')
+    parser.add_argument('scan_data_filename', type=str, help='Filename of scan data.')
+    parser.add_argument('scan_count', type=int, help='Scancount.')
 
-    # settings_file
+    # TODO: Code a more foolproof boolean input later
+    parser.add_argument('return_data', type=int, help='1 for True, 0 for False')
 
-    # scan_data_filename
+    args = parser.parse_args()
+    parsed_args['settings_file_path'] = args.settings_file_path
+    parsed_args['scan_data_filename'] = args.scan_data_filename
+    parsed_args['scan_count'] = args.scan_count
 
-    # scan_count
+    if args.return_data == 1:
+        parsed_args['return_data'] = True
+    elif args.return_data == 0:
+        parsed_args['return_data'] = False
 
-    # return_data
-    
-    
-    # Define argument parser
-    # TODO: Insert argument parser; recommend usage of argparse library,
-    # https://docs.python.org/3.5/library/argparse.html)
-    arg_names = ["setting_files", "scan_count", "scan_data_filename", "return_data"] #Name of args
-    args_def =  ['radar_settings.yml', FOREVER_SCAN_COUNT, None, False] #Default values of args
-
-    # Creates a Namespace parsed_args
-    parsed_args = argparse.Namespace()
-    # Creates a dictionary object that parsed_args references
-    args_dict = vars(parsed_args)
-
-    #Checks to ensure at or bellow max numer of arguments
-    if len(args) > len(arg_names):
-        raise RuntimeError("Too many arguments provide. Expected: {0} Got: {1}".format(len(args_name), len(args)))
-
-    # Creates dictionary entries matching arg value with arg names
-    for a in range(len(args)):
-        args_dict[arg_names[a]] = args[a]
-    for d in range(len(arg_names) - len(args)):
-        #Assign defalt values to unasigned args
-        args_dict[arg_names[len(args)+d]] = args_def[arg_names[len(args)+d]]
-
-    # Perform any needed additional checks and modifcation of parsed arguments
-    # TODO: Insert appropriate code here
-    if parsed_args is None:
-        logger.info()
-    
     return parsed_args
 
-def main(args):
+def main():
     """Main execution method to command radar to collect data.
-    
-    Args:
-        args (list)
-            Input arguments as taken from command line execution via sys.argv[1:].
-    
     Returns:
         data (str)
-            Data read from the radar; needs to unpacked to properly access scan information. Will 
+            Data read from the radar; needs to unpacked to properly access scan information. Will
             only be non-empty if return_data input flag is set to True.
-    
     Raises:
         # TODO: Update w/ appropriate error cases.
     """
     logger.info('Starting radar data collection process...')
 
-    # Parse input arguments
-    parsed_args = parse_args(args)
+
+    # Fetch/Parse input arguments
+    parsed_args = parse_args()
     logger.debug('Input arguments are --> {0}'.format(parsed_args))
 
     # Initialize output
     data = None
-    
+
     try:
         # Initialize radar
         radar = PulsON440(logger=logger)
-        
-        # TODO: Insert appropriate code that connects to radar, gets user settings, sets radar 
+
+        # TODO: Insert appropriate code that connects to radar, gets user settings, sets radar
         # configuration, commands appropriate collection, and returns the collected data
 
         radar.connect()
-        radar.read_setting_file(settings_file=parse_args.settings_file)
+        radar.read_settings_file(settings_file=parsed_args.settings_file)
         radar.set_radar_config()
-        if parsed_args.collect.mode == 'collect':
-            data = radar.collect(scan_count=parsed_args.scan_count, scan_data_filename=parsed_args.scan_data_filename)
-        elif parsed_args.collect.mode == 'quick':
-            data = radar.quick_look(scan_data_filename=parsed_args.scan_data_filename)
+        if parsed_args.collect_mode == 'collect':
+            data = radar.collect(#Insert arguments)
+        elif parsed_args.collect_mode == 'quick':
+            data = radar.quick_look(# Insert arguments here)
         else:
-            raise RuntimeError("Unrecognized collection mode {0}".format(parsed_args.collect_mode))
+            raise RuntimeError('Unrecognized collection mode {0}'.format(parsed_args.collect_mode))
         logger.info('Completed radar data collection process!')
 
     except Exception:
         logger.exception('Fatal error encountered!')
-        
+
     # Disconnect radar and close logger
     finally:
         radar.disconnect()
         close_logger(logger)
-        
+
     return data
-    
+
 if __name__ == '__main__':
     """Standard Python alias for command line execution."""
-    main(sys.argv[1:])
-    
+    main()

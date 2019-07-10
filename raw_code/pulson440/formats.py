@@ -39,7 +39,7 @@ MRM_GET_STATUSINFO_REQUEST = {'message_type': 61441, # Message type
                                   ('message_type', [np.dtype(np.uint16), None]), # Message type
                                   ('message_id', [np.dtype(np.uint16), None])])} # Message ID
 MRM_GET_STATUSINFO_REQUEST['packet_length'] = sum( # Packet length (bytes))
-        [value[0].itemsize for value in MRM_GET_CONFIG_REQUEST['packet_def'].values()])
+        [value[0].itemsize for value in MRM_GET_STATUSINFO_REQUEST['packet_def'].values()])
 
 # Set radar configuration request; radar to host
 MRM_GET_STATUSINFO_CONFIRM = {'message_type': 61697, # Message type
@@ -234,7 +234,7 @@ MRM_GET_STATUSINFO_CONFIRM = {'message_type': 61697,
                               ('board_type', np.dtype(np.uint8)),
                               ('transmitter_configuration', np.dtype(np.uint8)),
                               ('temperature', np.dtype(np.int32)),
-                              ('pkg_version', ''),
+                              ('pkg_version', np.dtype(np.int32)),
                               ('status', np.dtype(np.uint32))
                               ])}
 MRM_GET_STATUSINFO_CONFIRM['packet_length'] = sum(

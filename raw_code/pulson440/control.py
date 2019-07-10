@@ -38,6 +38,7 @@ def parse_args():
         parsed_args(dictionary)
             command line arguments parsed
     '''
+    parsed_args = {}
     # Set up parser for command line arguments
     parser = argparse.ArgumentParser(description='Pulson440 Radar software')
     parser.add_argument('settings_file_path', type=str, help='Path for the settings file.')
@@ -48,6 +49,7 @@ def parse_args():
     parser.add_argument('return_data', type=int, help='1 for True, 0 for False')
 
     args = parser.parse_args()
+
     parsed_args['settings_file_path'] = args.settings_file_path
     parsed_args['scan_data_filename'] = args.scan_data_filename
     parsed_args['scan_count'] = args.scan_count
@@ -88,12 +90,12 @@ def main():
         radar.connect()
         radar.read_settings_file(settings_file=parsed_args.settings_file)
         radar.set_radar_config()
-        if parsed_args.collect_mode == 'collect':
-            data = radar.collect(#Insert arguments)
-        elif parsed_args.collect_mode == 'quick':
-            data = radar.quick_look(# Insert arguments here)
-        else:
-            raise RuntimeError('Unrecognized collection mode {0}'.format(parsed_args.collect_mode))
+       # if parsed_args.collect_mode == 'collect':
+            #data = radar.collect(#Insert arguments)
+       # elif parsed_args.collect_mode == 'quick':
+            #data = radar.quick_look(# Insert arguments here)
+       # else:
+       #     raise RuntimeError('Unrecognized collection mode {0}'.format(parsed_args.collect_mode))
         logger.info('Completed radar data collection process!')
 
     except Exception:

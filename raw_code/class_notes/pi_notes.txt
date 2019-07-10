@@ -1,0 +1,13 @@
+connect to pi wifi with password
+ssh to 192.168.2.1
+username:uassar
+password: DroneRadar@2019
+
+in the pi:
+    three folders:common pulson440 uassar_env
+    
+    commands:
+        source uassar_env/bin/activate - activate the environment to get packages
+        deactivate - deactivate
+        pip list - list packages
+

@@ -44,20 +44,31 @@ def parse_args(args):
             Parsed arguments.
             
     Raises:
+        RuntimeError - too many arguments provided
         TODO: Update w/ appropriate error cases.
     """
     # Define argument parser
     # TODO: Insert argument parser; recommend usage of argparse library,
     # https://docs.python.org/3.5/library/argparse.html)
-    parsed_args = None
-    
-    # List of arguments needed
-    # settings_file
-    # scan_data_filename
-    # scan_count
-    # return_data
-    
-    
+    arg_names = ["setting_files", "scan_count", "scan_data_filename"] #Name of args
+    args_def =  ['radar_settings.yml', FOREVER_SCAN_COUNT, None] #Default values of args
+
+    # Creates a Namespace parsed_args
+    parsed_args = argparse.Namespace()
+    # Creates a dictionary object that parsed_args references
+    args_dict = vars(parsed_args)
+
+    #Checks to ensure at or bellow max numer of arguments
+    if len(args) > len(arg_names):
+        raise RuntimeError("Too many arguments provide. Expected: {0} Got: {1}".format(len(args_name), len(args)))
+
+    # Creates dictionary entries matching arg value with arg names
+    for a in range(len(args)):
+        args_dict[arg_names[a]] = args[a]
+    for d in range(len(arg_names) - len(args)):
+        #Assign defalt values to unasigned args
+        args_dict[arg_names[len(args)+d]] = args_def[arg_names[len(args)+d]]
+
     # Perform any needed additional checks and modifcation of parsed arguments
     # TODO: Insert appropriate code here
     if parsed_args is None:
@@ -95,16 +106,16 @@ def main(args):
         
         # TODO: Insert appropriate code that connects to radar, gets user settings, sets radar 
         # configuration, commands appropriate collection, and returns the collected data
-        
+
         radar.connect()
-        radar.read_settings_file(settings_file=parsed_args.settings_file)
+        radar.read_setting_file(settings_file=parse_args.settings_file)
         radar.set_radar_config()
-        if parsed_args.collect_mode == 'collect':
-            data = radar.collect(#Insert arguments)
-        elif parsed_args.collect_mode == 'quick':
-            data = radar.quick_look(# Insert arguments here)
+        if parsed_args.collect.mode == 'collect':
+            data = radar.collect(scan_count=parsed_args.scan_count, scan_data_filename=parsed_args.scan_data_filename)
+        elif parsed_args.collect.mode == 'quick':
+            data = radar.quick_look(scan_data_filename=parsed_args.scan_data_filename)
         else:
-            raise RuntimeError('Unrecognized collection mode {0}'.format(parsed_args.collect_mode))
+            raise RuntimeError("Unrecognized collection mode {0}".format(parsed_args.collect_mode))
         logger.info('Completed radar data collection process!')
 
     except Exception:

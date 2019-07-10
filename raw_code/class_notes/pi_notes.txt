@@ -11,3 +11,4 @@ in the pi:
         deactivate - deactivate
         pip list - list packages
 
+

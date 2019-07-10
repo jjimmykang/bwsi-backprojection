@@ -161,5 +161,40 @@ MRM_SCAN_INFO = {'message_type': 61953, # Message type
                          ('message_index', np.dtype(np.uint16)), # Index of this message's portion of data in single scan
                          ('num_messages_total', np.dtype(np.uint16)), # Number of data messages in single scan
                          ('scan_data', np.dtype(np.int32))])} # Scan data
-MRM_SCAN_INFO['packet_length'] = sum( # Packet length (bytes))
+MRM_SCAN_INFO['packet_length'] = sum(
         [value.itemsize for value in MRM_SCAN_INFO['packet_def'].values()])
+
+# Status info request; host to radar
+MRM_GET_STATUSINFO_REQUEST = {'message_type': 61441,
+                              'packet_def' : OrderedDict([
+                              ('message_type', np.dtype(np.uint16)),
+                              ('message_id', np.dtype(np.uint16))
+                              ])}
+MRM_GET_STATUSINFO_REQUEST['packet_length'] = sum(
+        [value.itemsize for value in MRM_GET_STATUSINFO_REQUEST['packet_def'].values()])
+
+MRM_GET_STATUSINFO_CONFIRM = {'message_type': 61697,
+                              'packet_def' : OrderedDict([
+                              ('message_type', np.dtype(np.uint16)),
+                              ('message_id', np.dtype(np.uint16)),
+                              ('mrm_version_major', np.dtype(np.uint8)),
+                              ('mrm_version_minor', np.dtype(np.uint8)),
+                              ('mrm_version_build', np.dtype(np.uint16)),
+                              ('uwb_kernel_major', np.dtype(np.uint8)),
+                              ('uwb_kernel_minor', np.dtype(np.uint8)),
+                              ('uwb_kernel_version', np.dtype(np.uint16)),
+                              ('fpga_firmware_version', np.dtype(np.uint8)),
+                              ('fpga_firmware_year', np.dtype(np.uint8)),
+                              ('fpga_firmware_month', np.dtype(np.uint8)),
+                              ('fpga_firmware_day', np.dtype(np.uint8)),
+                              ('serial_number', np.dtype(np.uint32)),
+                              ('board_revision', np.dtype(np.uint8)),
+                              ('bit_test_result', np.dtype(np.uint8)),
+                              ('board_type', np.dtype(np.uint8)),
+                              ('transmitter_configuration', np.dtype(np.uint8)),
+                              ('temperature', np.dtype(np.int32)),
+                              ('pkg_version', ''),
+                              ('status', np.dtype(np.uint32))
+                              ])}
+MRM_GET_STATUSINFO_CONFIRM['packet_length'] = sum(
+            [value.itemsize for value in MRM_GET_STATUSINFO_CONFIRM['packet_def'].values()])

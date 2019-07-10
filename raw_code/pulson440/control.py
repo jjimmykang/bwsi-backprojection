@@ -62,7 +62,7 @@ def parse_args(args):
     # TODO: Insert argument parser; recommend usage of argparse library,
     # https://docs.python.org/3.5/library/argparse.html)
     arg_names = ["setting_files", "scan_count", "scan_data_filename", "return_data"] #Name of args
-    args_def =  ['radar_settings.yml', FOREVER_SCAN_COUNT, None, None] #Default values of args
+    args_def =  ['radar_settings.yml', FOREVER_SCAN_COUNT, None, False] #Default values of args
 
     # Creates a Namespace parsed_args
     parsed_args = argparse.Namespace()

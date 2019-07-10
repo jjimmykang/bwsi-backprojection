@@ -211,6 +211,7 @@ MRM_GET_STATUSINFO_REQUEST = {'message_type': 61441,
 MRM_GET_STATUSINFO_REQUEST['packet_length'] = sum(
         [value.itemsize for value in MRM_GET_STATUSINFO_REQUEST['packet_def'].values()])
 
+# Status info receive; radar to host
 MRM_GET_STATUSINFO_CONFIRM = {'message_type': 61697,
                               'packet_def' : OrderedDict([
                               ('message_type', np.dtype(np.uint16)),

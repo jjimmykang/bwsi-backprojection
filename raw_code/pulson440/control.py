@@ -41,7 +41,7 @@ def parse_args():
     parsed_args = {}
     # Set up parser for command line arguments
     parser = argparse.ArgumentParser(description='Pulson440 Radar software')
-    parser.add_argument('settings_file_path', type=str, help='Path for the settings file.')
+    parser.add_argument('settings_file', type=str, help='Path for the settings file.')
     parser.add_argument('scan_data_filename', type=str, help='Filename of scan data.')
     parser.add_argument('scan_count', type=int, help='Scancount.')
 
@@ -50,7 +50,7 @@ def parse_args():
 
     args = parser.parse_args()
 
-    parsed_args['settings_file_path'] = args.settings_file_path
+    parsed_args['settings_file'] = args.settings_file
     parsed_args['scan_data_filename'] = args.scan_data_filename
     parsed_args['scan_count'] = args.scan_count
 
@@ -88,7 +88,8 @@ def main():
         # configuration, commands appropriate collection, and returns the collected data
 
         radar.connect()
-        radar.read_settings_file(settings_file=parsed_args.settings_file)
+        # print(parsed_args)
+        radar.read_settings_file(settings_file=parsed_args['settings_file'])
         radar.set_radar_config()
        # if parsed_args.collect_mode == 'collect':
             #data = radar.collect(#Insert arguments)

@@ -45,7 +45,7 @@ MRM_GET_STATUSINFO_REQUEST['packet_length'] = sum( # Packet length (bytes))
 MRM_GET_STATUSINFO_CONFIRM = {'message_type': 61697, # Message type
                           'packet_def': OrderedDict([
                                   ('message_type', np.dtype(np.uint16)), # Message type
-                                  ('message_id', np.dtype(np.uint16)), # Message ID, A tracking number
+                                  ('message_id', np.dtype(np.uint16)), # Message ID, A tracking number 
                                   ('mrm_version_major', np.dtype(np.uint8)), # MRM embedded major version number
                                   ('mrm_version_minor', np.dtype(np.uint8)), # MRM embedded minor version number
                                   ('mrm_version_build', np.dtype(np.uint16)), # MRM embedded build version number
@@ -53,15 +53,15 @@ MRM_GET_STATUSINFO_CONFIRM = {'message_type': 61697, # Message type
                                   ('uwb_kernel_minor', np.dtype(np.uint8)), # Kernel code minor version number
                                   ('uwb_kernel_build', np.dtype(np.uint16)), # Kernel code build version number
                                   ('fpga_firmware_version', np.dtype(np.uint8)), # Firmware version in hex
-                                  ('fpga_firmware_year', np.dtype(np.uint8)), # Firmware year encoded.
-                                  ('fpga_firmware_month', np.dtype(np.uint8)), # Firmware month encoded.
-                                  ('fpga_firmware_day', np.dtype(np.uint8)), # Firmware day encoded.
+                                  ('fpga_firmware_year', np.dtype(np.uint8)), # Firmware year encoded. 
+                                  ('fpga_firmware_month', np.dtype(np.uint8)), # Firmware month encoded. 
+                                  ('fpga_firmware_day', np.dtype(np.uint8)), # Firmware day encoded. 
                                   ('serial_number', np.dtype(np.uint32)), # Device serial number represented in hex
                                   ('board_revision', np.dtype(np.uint8)), # PCB revision – a single ASCII character
-                                  ('power_on_bit_test_result', np.dtype(np.uint8)), # Built-in Test Results,
+                                  ('power_on_bit_test_result', np.dtype(np.uint8)), # Built-in Test Results, 
                                   ('board_type', np.dtype(np.uint8)), # 1 – P400, 2 – P410
                                   ('transmitter_config', np.dtype(np.uint8)), # 0 – FCC compliant
-                                  ('temperature', np.dtype(np.int32)), # Board temp in 0.25oC
+                                  ('temperature', np.dtype(np.int32)), # Board temp in 0.25oC 
                                   ('package_version', np.dtype("S2")), # Human-readable string that identifies the embedded package release version
                                   ('status', np.dtype(np.uint32)), # 0=success
                                   ])} # Status

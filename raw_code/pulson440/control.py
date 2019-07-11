@@ -99,7 +99,10 @@ def main():
         if args.nocreate:
             data_file = args.nocreate
         else:
-            data_file = 'scan_{0}{1}_{2}:{3}:{4}'.format(dt.now().month, dt.now().day, dt.now().hour, dt.now().minute, dt.now().second)
+            # name data_file with timestamp
+            data_file = 'collected_data/scan_{0}{1}_{2}:{3}:{4}'.format(dt.now().month, dt.now().day, dt.now().hour, dt.now().minute, dt.now().second)
+            # create the file
+            f = open(data_file, 'w+')
 
         # set up return data
         return_data_flag = True

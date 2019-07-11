@@ -74,7 +74,7 @@ def main():
 
     # Fetch/Parse input arguments
     args = parse_args()
-    logger.debug('Input arguments are --> {0}'.format(parsed_args))
+    logger.debug('Input arguments are --> {0}'.format(args))
 
     # Initialize output
     data = None
@@ -100,9 +100,10 @@ def main():
             data_file = args.nocreate
         else:
             # name data_file with timestamp
-            data_file = 'collected_data/scan_{0}{1}_{2}:{3}:{4}'.format(dt.now().month, dt.now().day, dt.now().hour, dt.now().minute, dt.now().second)
+            data_file = 'collected_data/scan_{0}{1}{2}{3}.txt'.format(dt.now().day, dt.now().hour, dt.now().minute, dt.now().second)
             # create the file
             f = open(data_file, 'w+')
+            logger.info('opened new data file')
 
         # set up return data
         return_data_flag = True
@@ -112,11 +113,11 @@ def main():
         radar.set_radar_config()
 
         # Checks whether to collect or quickscan
-        if parsed_args['scan_mode'] == 'collect':
-            data = radar.collect(scan_count=parsed_args['scan_count'], scan_data_filename=parsed_args['scan_data_filename'], return_data=return_data_flag)
-        elif parsed_args['scan_mode'] == 'quick':
-            data = radar.quick_look(scan_data_filename=parsed_args['scan_data_filename'], return_data=return_data_flag)
-        elif parsed_args['scan_mode'] == 'noscan':
+        if args.scan_mode == 'collect':
+            data = radar.collect(scan_count=args.scan_count, scan_data_filename=data_file, return_data=return_data_flag)
+        elif args.scan_mode == 'quick':
+            data = radar.quick_look(scan_data_filename=data_file, return_data=return_data_flag)
+        elif args.scan_mode == 'noscan':
             logger.info('noscan detected... unpacking data.')
         else:
             raise RuntimeError('Unrecognized collection mode {0}'.format(parsed_args.collect_mode))
@@ -128,7 +129,7 @@ def main():
     #try to unpack the data
     try:
         logger.info('Attempting to unpack data...')
-        data_unpacked = unpack(parsed_args['scan_data_filename'])
+        data_unpacked = unpack(data_file)
 
         # Simply prints the unpacked data
         print("data_unpacked:")

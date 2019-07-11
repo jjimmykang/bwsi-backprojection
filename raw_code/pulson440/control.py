@@ -21,6 +21,7 @@ from pulson440.pulson440 import PulsON440
 from pulson440.constants import DEFAULT_LOGGER_NAME, DEFAULT_LOGGER_CONFIG, FOREVER_SCAN_COUNT, \
     MIN_SCAN_COUNT, CONTINUOUS_SCAN_INTERVAL
 import yaml
+from unpack import unpack
 
 # Logger setup
 try:
@@ -38,7 +39,7 @@ def parse_args():
         parsed_args(dictionary)
             command line arguments parsed
     '''
-    parsed_args = {}
+
     # Set up parser for command line arguments
     parser = argparse.ArgumentParser(description='Pulson440 Radar software')
     parser.add_argument('scan_mode', type=str, help='collect or quicklook')
@@ -49,8 +50,11 @@ def parse_args():
     # TODO: Code a more foolproof boolean input later
     parser.add_argument('return_data', type=int, help='1 for True, 0 for False')
 
+    # Object to hold command line arguments
     args = parser.parse_args()
 
+    # Dictionary to hold the data
+    parsed_args = {}
     parsed_args['scan_mode'] = args.scan_mode
     parsed_args['settings_file'] = args.settings_file
     parsed_args['scan_data_filename'] = args.scan_data_filename
@@ -92,13 +96,29 @@ def main():
         radar.connect()
         radar.read_settings_file(settings_file=parsed_args['settings_file'])
         radar.set_radar_config()
+
+        # Checks whether to collect or quickscan
         if parsed_args['scan_mode'] == 'collect':
             data = radar.collect(scan_count=parsed_args['scan_count'], scan_data_filename=parsed_args['scan_data_filename'], return_data=parsed_args['return_data'])
         elif parsed_args['scan_mode'] == 'quick':
             data = radar.quick_look(scan_data_filename=parsed_args['scan_data_filename'], return_data=parsed_args['return_data'])
+        elif parsed_args['scan_mode'] == 'noscan':
+            logger.info('noscan detected... unpacking data.')
         else:
             raise RuntimeError('Unrecognized collection mode {0}'.format(parsed_args.collect_mode))
         logger.info('Completed radar data collection process!')
+
+    except Exception:
+        logger.exception('Fatal error encountered!')
+
+    #try to unpack the data
+    try:
+        logger.info('Attempting to unpack data...')
+        data_unpacked = unpack(parsed_args['scan_data_filename'])
+
+        # Simply prints the unpacked data
+        print("data_unpacked:")
+        print(data_unpacked)
 
     except Exception:
         logger.exception('Fatal error encountered!')

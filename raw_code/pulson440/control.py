@@ -22,6 +22,7 @@ from pulson440.constants import DEFAULT_LOGGER_NAME, DEFAULT_LOGGER_CONFIG, FORE
     MIN_SCAN_COUNT, CONTINUOUS_SCAN_INTERVAL
 import yaml
 from unpack import unpack
+from datetime import datetime as dt
 
 # Logger setup
 try:
@@ -36,36 +37,28 @@ except Exception as e:
 def parse_args():
     '''Parses command line arguments.
     Returns:
-        parsed_args(dictionary)
+        parsed_args(object)
             command line arguments parsed
+            attributes:
+                scan_mode(str): collect or quicklook
+                scan_count(int): number of scans
+                --settings: force a settings file path
+                --create: automatically creates data file
+                --noreturn: forces no return data
     '''
 
     # Set up parser for command line arguments
     parser = argparse.ArgumentParser(description='Pulson440 Radar software')
     parser.add_argument('scan_mode', type=str, help='collect or quicklook')
-    parser.add_argument('settings_file', type=str, help='Path for the settings file.')
-    parser.add_argument('scan_data_filename', type=str, help='Filename of scan data.')
     parser.add_argument('scan_count', type=int, help='Scancount.')
-
-    # TODO: Code a more foolproof boolean input later
-    parser.add_argument('return_data', type=int, help='1 for True, 0 for False')
+    parser.add_argument('--settings', type=str, help='force a settings file path ')
+    parser.add_argument('--nocreate', help='automatically create data file')
+    parser.add_argument('--noreturn', help='forces no return data', action='store_true')
 
     # Object to hold command line arguments
     args = parser.parse_args()
 
-    # Dictionary to hold the data
-    parsed_args = {}
-    parsed_args['scan_mode'] = args.scan_mode
-    parsed_args['settings_file'] = args.settings_file
-    parsed_args['scan_data_filename'] = args.scan_data_filename
-    parsed_args['scan_count'] = args.scan_count
-
-    if args.return_data == 1:
-        parsed_args['return_data'] = True
-    elif args.return_data == 0:
-        parsed_args['return_data'] = False
-
-    return parsed_args
+    return args
 
 def main():
     """Main execution method to command radar to collect data.
@@ -80,7 +73,7 @@ def main():
 
 
     # Fetch/Parse input arguments
-    parsed_args = parse_args()
+    args = parse_args()
     logger.debug('Input arguments are --> {0}'.format(parsed_args))
 
     # Initialize output
@@ -94,14 +87,35 @@ def main():
         # configuration, commands appropriate collection, and returns the collected data
 
         radar.connect()
-        radar.read_settings_file(settings_file=parsed_args['settings_file'])
+
+        # set up settings file
+        if args.settings:
+            radar.read_settings_file(settings_file=args.settings)
+        else:
+            radar.read_settings_file(settings_file='./radar_settings.yml')
+
+        # set up data file - mark with data if autocreate
+        data_file = ''
+        if args.nocreate:
+            data_file = args.nocreate
+        else:
+            # name data_file with timestamp
+            data_file = 'collected_data/scan_{0}{1}_{2}:{3}:{4}'.format(dt.now().month, dt.now().day, dt.now().hour, dt.now().minute, dt.now().second)
+            # create the file
+            f = open(data_file, 'w+')
+
+        # set up return data
+        return_data_flag = True
+        if args.noreturn:
+            return_data_flag = False
+
         radar.set_radar_config()
 
         # Checks whether to collect or quickscan
         if parsed_args['scan_mode'] == 'collect':
-            data = radar.collect(scan_count=parsed_args['scan_count'], scan_data_filename=parsed_args['scan_data_filename'], return_data=parsed_args['return_data'])
+            data = radar.collect(scan_count=parsed_args['scan_count'], scan_data_filename=parsed_args['scan_data_filename'], return_data=return_data_flag)
         elif parsed_args['scan_mode'] == 'quick':
-            data = radar.quick_look(scan_data_filename=parsed_args['scan_data_filename'], return_data=parsed_args['return_data'])
+            data = radar.quick_look(scan_data_filename=parsed_args['scan_data_filename'], return_data=return_data_flag)
         elif parsed_args['scan_mode'] == 'noscan':
             logger.info('noscan detected... unpacking data.')
         else:

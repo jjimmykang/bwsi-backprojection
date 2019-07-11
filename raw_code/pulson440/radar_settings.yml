@@ -6,7 +6,7 @@ tx_gain_ind: 63 # Transmit gain index from 0 (lowest) - 63 (highest)
 pii: 11 # Pulse integration index from 6 (lowest) - 15 (highest)
 
 # Less used settings
-code_channel: 0 # Code channel from 0 - 10; used to deconflict multiple radars
+code_channel: 6 # Code channel from 0 - 10; used to deconflict multiple radars
 node_id: 1 # Node ID from 1 to (2^32 - 1); avoid 0 and 2^32
 persist_flag: 0 # Configuration persistence flag; 0 to not persist, 1 to persist
 quick_look_num_scans: 200 # Number of scans to perform in quick-look

@@ -13,7 +13,7 @@ quick_look_num_scans: 200 # Number of scans to perform in quick-look
 
 # Timing settings
 set_config_timeout: 5 # Time (s) allowed to successfully set radar configuration before raising an error Default: 5
-get_config_timeout: 5 # Time (s) allowed to successfully get radar configuration before raising an error Default: 1
-scan_request_timeout: 5 # Time (s) allowed to successfully send scan request before raising error Default: 1
-read_scan_data_timeout: 100 # Time (s) allowed between consecutive packets before raising error Default: 2
+get_config_timeout: 1 # Time (s) allowed to successfully get radar configuration before raising an error Default: 1
+scan_request_timeout: 1 # Time (s) allowed to successfully send scan request before raising error Default: 1
+read_scan_data_timeout: 2 # Time (s) allowed between consecutive packets before raising error Default: 2
 read_residual_timeout: 5 # Time (s) allowed to read residual streaming data before dropping scans Default: 5

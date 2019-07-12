@@ -22,14 +22,14 @@ NOT_IMPLEMENTED_VAL = 0 # Value for not implemented fields
 # Byte order to and from radar
 BYTE_ORDER = 'big'
 
-# Radar system constants; these are values defined by how the radar system, i.e., radar itself with 
+# Radar system constants; these are values defined by how the radar system, i.e., radar itself with
 # antennas and so on has been configured
 DT_0 = 10 # Path delay through antennas (ns)
 
 # Default values and bounds for settings that can set through radar settings YAML
 DEFAULT_SETTINGS = {
         'dT_0': # Path delay through antennas (ns)
-            {'default': DT_0, 'bounds': (0, float('inf'))}, 
+            {'default': DT_0, 'bounds': (0, float('inf'))},
         'range_start': # Start range (m)
             {'default': 4, 'bounds':(0, float('inf'))},
         'range_stop': # Stop range (m)
@@ -76,7 +76,7 @@ DEFAULT_CONFIG = OrderedDict([
     ('tx_gain_ind', 63), # Transmit gain index
     ('code_channel', 0), # Code channel
     ('persist_flag', REC_PERSIST_FLAG)]) # Persist flag}
-    
+
 # Host computer and PulsON 440 IP configuration defaults
 UDP_IP_HOST = "192.168.1.1" # Host IP address
 UDP_IP_RADAR = "192.168.1.151" # Radar IP address; [1] states this is the default value but is not always the case
@@ -129,4 +129,3 @@ DEFAULT_LOGGER_CONFIG = \
             }
         }
     }
-            

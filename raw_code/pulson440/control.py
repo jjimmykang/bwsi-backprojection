@@ -106,9 +106,9 @@ def main():
             logger.info('opened new data file')
 
         # set up return data
-        return_data_flag = True
+        return_data_flag = False
         if args.noreturn:
-            return_data_flag = False
+            return_data_flag = True
 
         radar.set_radar_config()
 

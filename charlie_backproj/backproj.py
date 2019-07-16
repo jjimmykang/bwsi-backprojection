@@ -58,8 +58,8 @@ for x in range(len(x_loc_real)) :
         y_locs = np.full(len(platform_locs_y), y_loc)
         z_locs = np.zeros(len(x_locs))
         
-        # total_dists = np.sqrt( np.square( (platform_locs_x-x_locs) ) + np.square( (platform_locs_y-y_locs) ) + np.square( (platform_locs_z-z_locs) ) )
-        total_dists = distance(platform_locs_x, platform_locs_y, platform_locs_z, x_loc, y_loc, z_loc)
+        total_dists = np.sqrt( np.square( (platform_locs_x-x_locs) ) + np.square( (platform_locs_y-y_locs) ) + np.square( (platform_locs_z-z_locs) ) )
+        # total_dists = distance(platform_locs_x, platform_locs_y, platform_locs_z, x_loc, y_loc, z_loc)
 
         
         

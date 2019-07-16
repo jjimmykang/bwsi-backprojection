@@ -356,10 +356,10 @@ def main(args):
         h_img = rti_ax.imshow(20 * np.log10(np.abs(data['scan_data'])))
         rti_ax.set_aspect('auto')
         rti_ax.set_title('Range-Time Intensity')
-        rti_ax.set_xlabel('Range (m) [Range Bin Number]')
-        rti_ax.set_ylabel('Time Elapsed (s) [Pulse Number]')
-        rti_ax.xaxis.set_major_formatter(range_formatter)
-        rti_ax.yaxis.set_major_formatter(pulse_formatter)
+        rti_ax.set_ylabel('Range (m) [Range Bin Number]')
+        rti_ax.set_xlabel('Time Elapsed (s) [Pulse Number]')
+        rti_ax.xaxis.set_major_formatter(pulse_formatter)
+        rti_ax.yaxis.set_major_formatter(range_formatter)
         cbar = rti_fig.colorbar(h_img)
         cbar.ax.set_ylabel('dB')
 
@@ -386,7 +386,7 @@ def main(args):
         rd_plot = RangeDopplerPlot(range_doppler, cpi_timestamps, range_formatter,
                                    doppler_formatter)
         rd_plot.start()
-        #rd_plot.save(range_doppler_filename)
+        rd_plot.save(range_doppler_filename)
         input('Press [enter] to continue.')
 
     # Return unpacked scan_data

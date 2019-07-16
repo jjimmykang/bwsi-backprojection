@@ -28,7 +28,7 @@ def backproject(data):
     range_bins = np.asarray(data['range_bins'][0])
 
     # Generate coordinate system(120x120 array in which every value is a pair of coordinates(x,y))
-    rows = np.arange(3, -3, -6/120)
+    rows = np.arange(4, -3, -7/120)
     cols = np.arange(-3, 3, 6/120)
 
     position_map = np.empty((len(rows), len(cols), 2), dtype=np.float64)
@@ -43,7 +43,6 @@ def backproject(data):
         platform_pos_2d.append([location[0], location[1]])
 
     platform_pos_2d = np.asarray(platform_pos_2d)
-    print(platform_pos_2d)
 
 
     x = 0
@@ -59,15 +58,15 @@ def backproject(data):
                 distance = np.square(pos[1] - radar_position[0])
                 distance += np.square(pos[0] - radar_position[1])
                 distance = np.sqrt(distance)
-                index = np.searchsorted(range_bins, distance)
-                if index > 1023:
-                    strength = 0
-                else:
-                    strength = np.abs(data_array[radar_counter][index])
+                index = (np.abs(range_bins-distance)).argmin()
+
+
+                strength = data_array[radar_counter][index]
                 total_strength += strength
                 radar_counter += 1
 
-            return_array[x][y] = total_strength
+
+            return_array[x][y] = np.abs(total_strength)
 
             y += 1
         x += 1

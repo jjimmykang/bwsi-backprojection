@@ -6,10 +6,17 @@ import matplotlib.pyplot as plt
 import time
 
 datafile_name = "./data/Mandrill_1way_data.pkl"
+# datafile_name = "./data/challenge_fun.pkl"
+
 with open(datafile_name, 'rb') as file:
     data = pickle.load(file)
 
 # print(data["range_bins"])
+# last = 0
+# for x in data["range_bins"][0] :
+#     print(x-last)
+#     last = x
+# print("odjafoidsjfoi")
 # print()
 # print(data["scan_data"])
 # print()
@@ -35,10 +42,11 @@ for x in range(len(x_loc_real)) :
             # result = data["range_bins"][0][closest_range_bin - 1]
         range_bins_list = []
         for i in range(len(total_dists)) :
-            # print(total_dists[i])
             closest_range_bin_ind = bisect.bisect_left(data["range_bins"][0], total_dists[i]) -1 #TODO: see if its -1 ind or not
-            # # print(closest_range_bin_ind)
-            # print(len(data["scan_data"][i]))
+            # closest_range_bin_ind = int(round((total_dists[i] - data["range_bins"][0][0])/0.01845))
+            # closest_range_bin_ind = math.floor((total_dists[i] - data["range_bins"][0][0])/0.01845)
+            # print((total_dists[i] - data["range_bins"][0][0])/0.01845)
+
             scan_data = data["scan_data"][i][closest_range_bin_ind]
             range_bins_list.append(scan_data)
             
@@ -48,7 +56,7 @@ for x in range(len(x_loc_real)) :
         sum_range_bins = np.sum(range_bins_list)
         sum_range_bins = np.abs(sum_range_bins)
         
-        pixels[x][y] = sum_range_bins
+        pixels[y][x] = sum_range_bins
 
 end_time = time.time()
 elapsed_time = end_time-start_time

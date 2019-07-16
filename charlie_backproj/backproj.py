@@ -3,6 +3,7 @@ import bisect
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 datafile_name = "./data/Mandrill_1way_data.pkl"
 with open(datafile_name, 'rb') as file:
@@ -18,6 +19,8 @@ x_loc_real = [6*a/120-3 for a in range(120)]
 y_loc_real = [6*a/120-3 for a in range(120)]
 
 pixels = [[b for b in range(120)] for a in range(120)]
+
+start_time = time.time()
 
 for x in range(len(x_loc_real)) :
     for y in range(len(y_loc_real)) :
@@ -47,6 +50,9 @@ for x in range(len(x_loc_real)) :
         
         pixels[x][y] = sum_range_bins
 
+end_time = time.time()
+elapsed_time = end_time-start_time
 print("Done.")
+print("Elapsed time: "+str(elapsed_time))
 imgplot = plt.imshow(pixels)
 plt.show()

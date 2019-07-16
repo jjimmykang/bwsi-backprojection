@@ -4,6 +4,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from numba import vectorize
 
 datafile_name = "./data/Mandrill_1way_data.pkl"
 # datafile_name = "./data/challenge_fun.pkl"
@@ -26,6 +27,10 @@ x_loc_real = [6*a/120-3 for a in range(120)]
 y_loc_real = [6*a/120-3 for a in range(120)]
 
 pixels = [[b for b in range(120)] for a in range(120)]
+
+@vectorize(['float32(float32, float32, float32, float32, float32, float32)'], target='cuda')
+def distance(x_a, y_a, z_a, x_b, y_b, z_b) :
+    return 1
 
 start_time = time.time()
 
@@ -62,5 +67,5 @@ end_time = time.time()
 elapsed_time = end_time-start_time
 print("Done.")
 print("Elapsed time: "+str(elapsed_time))
-imgplot = plt.imshow(pixels)
-plt.show()
+# imgplot = plt.imshow(pixels)
+# plt.show()

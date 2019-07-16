@@ -33,9 +33,9 @@ y_loc_real = [6*a/120-3 for a in range(120)]
 
 pixels = [[b for b in range(120)] for a in range(120)]
 
-@vectorize(['float32(float32, float32, float32, float32, float32, float32)'], target='cuda')
+@vectorize(['float32(float32, float32, float32, float32, float32, float32)'], target='cpu')
 def distance(x_a, y_a, z_a, x_b, y_b, z_b) :
-    return 1
+    return ( (x_a-x_b)**2 + (y_a-y_b)**2 + (z_a-z_b)**2 ) ** .5
 
 start_time = time.time()
 
@@ -57,7 +57,12 @@ for x in range(len(x_loc_real)) :
         x_locs = np.full(len(platform_locs_x), x_loc)
         y_locs = np.full(len(platform_locs_y), y_loc)
         z_locs = np.zeros(len(x_locs))
-        total_dists = np.sqrt( np.square( (platform_locs_x-x_locs) ) + np.square( (platform_locs_y-y_locs) ) + np.square( (platform_locs_z-z_locs) ) )
+        
+        # total_dists = np.sqrt( np.square( (platform_locs_x-x_locs) ) + np.square( (platform_locs_y-y_locs) ) + np.square( (platform_locs_z-z_locs) ) )
+        total_dists = distance(platform_locs_x, platform_locs_y, platform_locs_z, x_loc, y_loc, z_loc)
+
+        
+        
         # x = np.square( (platform_locs_x-x_locs) )
 
         # for i in range(len(data["platform_pos"])) :

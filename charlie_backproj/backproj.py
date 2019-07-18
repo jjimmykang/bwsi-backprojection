@@ -4,8 +4,9 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+# from numba import jit
 
-datafile_name = "./data/5Points_1way_data.pkl"
+datafile_name = "./data/Mandrill_1way_data.pkl"
 
 start_time = time.time()
 
@@ -17,22 +18,24 @@ data["platform_pos"] = np.asarray(data["platform_pos"])
 data["range_bins"] = np.asarray(data["range_bins"])
 range_bins_p = data["range_bins"][0]
 
-pre_pixels = np.zeros((100,100))
-pixels = np.zeros((100,100), dtype = np.complex128)
+pre_pixels = np.zeros((1000,1000))
+pixels = np.zeros((1000,1000), dtype = np.complex128)
 
+# @jit(nopython=True)
 def bin_search(b) :
     return bisect.bisect_left(data["range_bins"][0], b) -1 #TODO: see if its -1 ind or not
 
+# @jit(nopython=True)
 def find_range_data(i, a) :
     return data["scan_data"][i][a]
 
-x_loc_real = np.asarray([6*a/100-3 for a in range(100)])
-z_loc_real = np.zeros(100)
+x_loc_real = np.asarray([6*a/1000-3 for a in range(1000)])
+z_loc_real = np.zeros(1000)
 
-x_loc_m = np.asarray([ x_loc_real for a in range(100) ])
-y_loc_m = np.asarray([ x_loc_real for a in range(100) ])
+x_loc_m = np.asarray([ x_loc_real for a in range(1000) ])
+y_loc_m = np.asarray([ x_loc_real for a in range(1000) ])
 y_loc_m = np.rot90(y_loc_m)
-z_loc_m = np.asarray([ z_loc_real for a in range(100) ])
+z_loc_m = np.asarray([ z_loc_real for a in range(1000) ])
 
 platform_locs_full = data["platform_pos"]
 
@@ -65,5 +68,5 @@ end_time = time.time()
 elapsed_time = end_time-start_time
 print("Done.")
 print("Elapsed time: "+str(elapsed_time))
-imgplot = plt.imshow(pixels) #, interpolation="gaussian")
+imgplot = plt.imshow(pixels, interpolation="gaussian")
 plt.show()

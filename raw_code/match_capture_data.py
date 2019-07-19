@@ -10,4 +10,4 @@ print(RADAR_DATA_FILENAME)
 with open(MOTION_CAPTURE_FILENAME, newline='') as f:
     reader = csv.reader(f, delimiter=' ', quotechar='|')
     print(type(reader))
-
+    print(reader)

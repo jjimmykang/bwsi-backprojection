@@ -1,9 +1,0 @@
-singular tree
-scan range 4-14m
-24 ft 7 inches side to side
-25 feet to the tree from the center of walk
-200 scans at 1 foot intervals
-manually moved every foot
-scanned left to right
-range: 4-14 m
-

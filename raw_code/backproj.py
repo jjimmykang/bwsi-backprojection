@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import Formatter
 from matplotlib import transforms
 import time
-import speed
+# from backproj_c import backproject_vectorize_c
 
 POINTS2_DATA_DIR = 'data/2Points_1way_data.pkl'
 POINTS5_DATA_DIR = 'data/5Points_1way_data.pkl'
@@ -20,6 +20,9 @@ MANDRILL_PIC_DIR = 'data/Mandrill_1way_data.pkl'
 
 def backproject_vectorize(data, dimensions):
     '''Backprojects
+    DEPRECATED
+    DEPRECATED
+    DEPRECATED
     Arguments:
         data(dict)
             a dictionary of the data
@@ -105,6 +108,9 @@ def backproject_vectorize(data, dimensions):
 
 def backproject(data, interpolate_arg='linear'):
     '''Backprojects the data shown
+    DEPRECATED
+    DEPRECATED
+    DEPRECATED
     Arguments:
         data(dict)
             a dictionary of the data
@@ -213,6 +219,7 @@ def main():
     parser.add_argument('file_dir', type=str, help='specify file directory')
     parser.add_argument('x_res', type=int, help='x resolution')
     parser.add_argument('y_res', type=int, help='y resolution')
+    parser.add_argument('num_scans', type=int, help='number of scans')
     parser.add_argument('-v', '--visualize', action='store_true', default=0, help='toggle visualization mode')
     args = parser.parse_args()
 
@@ -227,7 +234,7 @@ def main():
     # Open the files
     file_data = open_file(args.file_dir)
 
-    file_to_open = backproject_vectorize(file_data, (args.x_res, args.y_res, 0))
+    file_to_open = backproject_vectorize(file_data, (args.x_res, args.y_res, 0), args.num_scans)
     print("Finished running backproject()")
     print("--- %s seconds ---" % (time.time() - start_time))
 

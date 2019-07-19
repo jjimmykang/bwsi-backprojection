@@ -18,16 +18,15 @@ POINTS2_DATA_DIR = 'data/2Points_1way_data.pkl'
 POINTS5_DATA_DIR = 'data/5Points_1way_data.pkl'
 MANDRILL_PIC_DIR = 'data/Mandrill_1way_data.pkl'
 
-def backproject_vectorize(data, dimensions):
+def backproject_vectorize(data, dimensions, num_scans):
     '''Backprojects
-    DEPRECATED
-    DEPRECATED
-    DEPRECATED
     Arguments:
         data(dict)
             a dictionary of the data
         dimensions(tuple)
             the resolution of the data (x, y, z)
+        num_scans(int)
+            the numberof scans
 
     Returns:
         return_array(array)
@@ -58,7 +57,7 @@ def backproject_vectorize(data, dimensions):
     # Broadcast the position map onto a 100x120x120x2 array. It's one hundred of the array to individually calculate the distance for.
     # The first index is the number of pulse.
     # The rest of the array is dimension (120x120x2), representing ordered pairs.
-    position_map_3d = np.empty((100, x_pixels, y_pixels, 3))
+    position_map_3d = np.empty((num_scans, x_pixels, y_pixels, 3))
     position_map_3d[:] = position_map
 
     # This code processes the platform data from the radar
@@ -75,23 +74,23 @@ def backproject_vectorize(data, dimensions):
 
     # Convert platform_pos_2d into a 100x120x120x2 array to overlay over position map
     # It's basically the identical layer throughout the 100 pulses
-    platform_pos_3d = np.empty((100, x_pixels, y_pixels, 3))
+    platform_pos_3d = np.empty((num_scans, x_pixels, y_pixels, 3))
     platform_pos_3d[:, :, :, :] = platform_pos[:, None, None, :]
 
     # With the platform_map_3d, and position_map_3d, we can generate the distance lookup table.
-    distance_lookup_table = np.empty((100, x_pixels, y_pixels))
+    distance_lookup_table = np.empty((num_scans, x_pixels, y_pixels))
     distance_lookup_table = np.sqrt(np.power((position_map_3d[..., 0] - platform_pos_3d[..., 0]), 2) + \
                                     np.power((position_map_3d[..., 1] - platform_pos_3d[..., 1]), 2) + \
                                     np.power((position_map_3d[..., 2] - platform_pos_3d[..., 2]), 2))
 
 
     #Utilize the distance LUT to generate signal map.
-    flattened_distance_lookup = np.reshape(distance_lookup_table, (100, -1))
-    signal_matrix = np.empty((100, x_pixels * y_pixels), dtype=np.complex128)
+    flattened_distance_lookup = np.reshape(distance_lookup_table, (num_scans, -1))
+    signal_matrix = np.empty((num_scans, x_pixels * y_pixels), dtype=np.complex128)
     radar_counter = 0
 
 
-    while radar_counter < 100:
+    while radar_counter < num_scans:
         signal_matrix[radar_counter] = np.interp(flattened_distance_lookup[radar_counter], range_bins, data_array[radar_counter])
         radar_counter += 1
 
@@ -227,16 +226,11 @@ def main():
     # graph flags
     graph = args.visualize
 
-    # Start timer
-    print('started timer')
-    start_time = time.time()
-
     # Open the files
     file_data = open_file(args.file_dir)
 
-    file_to_open = backproject_vectorize_c(file_data, (args.x_res, args.y_res, 0), args.num_scans)
-    print("Finished running backproject()")
-    print("--- %s seconds ---" % (time.time() - start_time))
+    file_to_open = backproject_vectorize(file_data, (args.x_res, args.y_res, 0), args.num_scans)
+
 
     if graph:
         print('graphing!')

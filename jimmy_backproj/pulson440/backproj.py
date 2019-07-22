@@ -18,7 +18,7 @@ POINTS2_DATA_DIR = 'data/2Points_1way_data.pkl'
 POINTS5_DATA_DIR = 'data/5Points_1way_data.pkl'
 MANDRILL_PIC_DIR = 'data/Mandrill_1way_data.pkl'
 
-def backproject_vectorize_real(data, dimension, extrapolate_pos=None):
+def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=False, window=6):
     '''WORK IN PROGRES: Backprojects real data
     Arguments:
         data(dict)
@@ -42,10 +42,18 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None):
     y_pixels = dimension
     z_pixels = 0
 
+    window_adjusted = window / 2
+
     # Generate needed objects
     data_array = np.asarray(data['scan_data'])
     return_array = np.empty((x_pixels, y_pixels))
-    range_bins = np.asarray(data['range_bins'][0])
+
+    # Account for different range bin format for simulated and real
+    if simulated:
+        range_bins = np.asarray(data['range_bins'][0])
+    else:
+        range_bins = np.asarray(data['range_bins'])
+
     encoded_data = np.empty((x_pixels, y_pixels))
     linear = True
 
@@ -55,8 +63,8 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None):
 
     print("Data fetched&generated: --- %s seconds ---" % (time.time() - absolute_start))
     # Generate coordinate system(120x120 array in which every value is a pair of coordinates(x,y))
-    cols = np.arange(-3, 3, 6/y_pixels)
-    rows = np.arange(3, -3, -6/x_pixels)
+    cols = np.arange(-window_adjusted, window_adjusted, window/y_pixels)
+    rows = np.arange(window_adjusted, -window_adjusted, -window/x_pixels)
     zetas = z_pixels
 
     position_map = np.empty((len(rows), len(cols), 3), dtype=np.float32)
@@ -83,9 +91,17 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None):
         platform_pos[..., 2] = extrapolate_pos[3]
         platform_pos = np.asarray(platform_pos)
     else:
-        platform_pos = np.asarray(data['platform_pos'])
+        if data['platform_pos'].shape[0] == num_scans:
+            platform_pos = np.asarray(data['platform_pos'])
+        else:
+            platform_pos = np.empty((num_scans, 3))
+            ratio = num_scans / data['platform_pos'].shape[0]
+            i = 0
+            while i < data['platform_pos'].shape[0]:
+                platform_pos[i] = data['platform_pos'][round(i / ratio)]
+                i += 1
 
-    print(platform_pos.shape)
+
     # Convert platform_pos_2d into a 100x120x120x2 array to overlay over position map
     # It's basically the identical layer throughout the 100 pulses
     platform_pos_3d = np.empty((num_scans, x_pixels, y_pixels, 3))
@@ -98,6 +114,7 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None):
                                     np.power((position_map_3d[..., 2] - platform_pos_3d[..., 2]), 2))
 
 
+    print('distance_lookup_table')
     #Utilize the distance LUT to generate signal map.
     flattened_distance_lookup = np.reshape(distance_lookup_table, (num_scans, -1))
     signal_matrix = np.empty((num_scans, x_pixels * y_pixels), dtype=np.complex128)
@@ -115,7 +132,6 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None):
     #array = np.asarray([[1, 2, 3], [4, 5, 6]])
     #print(speed.speed_func(array))
     return signal_matrix
-
 
 def backproject_vectorize_simulated(data, dimensions, num_scans):
     '''WORK IN PROGRES: Backprojects real data
@@ -329,7 +345,7 @@ def main():
     parser.add_argument('position_y1', help='position data (x, start_y, end_y, z)')
     parser.add_argument('position_y2', help='position data (x, start_y, end_y, z)')
     parser.add_argument('position_z', help='position data (x, start_y, end_y, z)')
-
+    parser.add_argument('--window', type=float, help='length of real world window')
     parser.add_argument('-v', '--visualize', action='store_true', default=0, help='toggle visualization mode')
     args = parser.parse_args()
 
@@ -340,7 +356,8 @@ def main():
     # Open the files
     file_data = open_file(args.file_dir)
 
-    if args.position_x  == 0 and args.position_y1 == 0 and args.position_y2 == 0 and args.position_z == 0:
+
+    if args.position_x  == '0' and args.position_y1 == '0' and args.position_y2 == '0' and args.position_z == '0':
         position_parsed = None
     else:
         position_parsed = (float(args.position_x), float(args.position_y1), float(args.position_y2), float(args.position_z))
@@ -350,7 +367,12 @@ def main():
     else:
         pixel_input = args.pixel
 
-    file_to_open = backproject_vectorize_real(file_data, pixel_input, position_parsed)
+    if not args.window == None:
+        window_input = int(args.window)
+    else:
+        window_input = 6
+
+    file_to_open = backproject_vectorize_real(file_data, pixel_input, position_parsed, window=window_input)
 
     if graph:
         print('graphing!')

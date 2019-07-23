@@ -91,15 +91,9 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=
         platform_pos[..., 2] = extrapolate_pos[3]
         platform_pos = np.asarray(platform_pos)
     else:
-        if data['platform_pos'].shape[0] == num_scans:
-            platform_pos = np.asarray(data['platform_pos'])
-        else:
-            platform_pos = np.empty((num_scans, 3))
-            ratio = num_scans / data['platform_pos'].shape[0]
-            i = 0
-            while i < data['platform_pos'].shape[0]:
-                platform_pos[i] = data['platform_pos'][round(i / ratio)]
-                i += 1
+        platform_pos = np.asarray(data['platform_pos'])
+
+
 
 
     # Convert platform_pos_2d into a 100x120x120x2 array to overlay over position map
@@ -132,6 +126,7 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=
     #array = np.asarray([[1, 2, 3], [4, 5, 6]])
     #print(speed.speed_func(array))
     return signal_matrix
+
 
 def backproject_vectorize_simulated(data, dimensions, num_scans):
     '''WORK IN PROGRES: Backprojects real data

@@ -98,14 +98,16 @@ def regularize(array):
 def main():
     # Argument Parser
     parser = argparse.ArgumentParser(description='align sar data')
+    parser.add_argument('first_cutoff', type=float, help='beginning cutoff in meters')
+    parser.add_argument('last_cutoff', type=float, help='last cutoff in meters')
     parser.add_argument('--pixel', type=int, help='pixel dimensions each side')
     parser.add_argument('--window', type=float, help='length of real world window')
-    parser.add_argument('-v', '--visualize', action='store_true', default=0, help='toggle visualization mode')
+    parser.add_argument('--mode', type=int, help='toggle visualization mode')
     parser.add_argument('--shift', type=float, help='amount to shift the data by')
     args = parser.parse_args()
 
     # Command line argument processing
-    graph = args.visualize
+    graph = args.mode
 
     if args.pixel == None:
         pixel_input = 120
@@ -158,7 +160,7 @@ def main():
 
     # Cut ends off the data
     # in seconds
-    cut_param = (5, 5)
+    cut_param = (args.first_cutoff, args.last_cutoff)
     motion_cut_param = (find_nearest(motion_timestamps, cut_param[0]), motion_timestamps.shape[0] - find_nearest(motion_timestamps, cut_param[1]))
     scan_cut_param = (find_nearest(scan_timestamps, cut_param[0]), scan_timestamps.shape[0] - find_nearest(scan_timestamps, cut_param[1]))
 
@@ -169,28 +171,45 @@ def main():
     scan_data = scan_data[scan_cut_param[0]:scan_cut_param[1]]
 
     motion_timestamps = regularize(motion_timestamps)
-    scan_timestamps=  regularize(scan_timestamps)
+    scan_timestamps =  regularize(scan_timestamps)
+    updated_num_scans = scan_data.shape[0]
+
+    #Scale data
+    ratio = updated_num_scans / platform_pos.shape[0]
+    print('platform_pos.shape', platform_pos.shape)
+    print('scan_data.shape:', scan_data.shape)
+    print('motion_timestamps.shape:', motion_timestamps.shape)
+    print('scan_timestamps.shape:', scan_timestamps.shape)
+    print('misc info:', (np.arange(0, updated_num_scans, 1) / ratio).shape)
+    scaled_platform_pos = np.empty((updated_num_scans, 3))
+    for i in np.arange(0, 3, 1):
+        scaled_platform_pos[:, i] = np.interp(np.arange(0, updated_num_scans, 1) / ratio, np.arange(0, platform_pos.shape[0], 1), platform_pos[:, i])
+
+    motion_timestamps = np.interp(np.arange(0, updated_num_scans, 1) / ratio, np.arange(0, motion_timestamps.shape[0], 1), motion_timestamps[:])
 
     # Prepare data entry into backprojection function
     # By this point, all data processing should be completed
-    entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
+    entry_data = {'scan_data': scan_data, 'platform_pos': scaled_platform_pos,
         'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
         'motion_timestamps': motion_timestamps, 'corner_reflector_pos': file_data['corner_reflector_pos']
     }
+    print('scan_data.shape:', scan_data.shape)
 
 
-    # Visualize the data RTI
 
-    visualize_data(entry_data)
-
-    #file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input)
+    file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input)
 
     # Graph the data
-    if graph:
+    if graph == 1:
+        # 1 indicates RTI Plot
+        visualize_data(entry_data)
+    elif graph == 2:
+        # 2 indicates Backprojected data
         image_fig = plt.figure()
         image_ax = image_fig.add_subplot(111)
         h_img = image_ax.imshow(file_opened)
         plt.show()
+    # 0 indicates nothing visual happens
 
 
 

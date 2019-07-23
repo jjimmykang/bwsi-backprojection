@@ -91,6 +91,10 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return idx
 
+
+def regularize(array):
+    return array - array[0]
+
 def main():
     # Argument Parser
     parser = argparse.ArgumentParser(description='align sar data')
@@ -122,9 +126,10 @@ def main():
     file_data = open_file(MANDRILL_1)
 
 
-    # Subtract least term from timestamps(to regularize at 0)
-    scan_timestamps = file_data['scan_timestamps'] - file_data['scan_timestamps'][0]
+    #Initialize timestamps
     motion_timestamps = file_data['motion_timestamps'] - file_data['motion_timestamps'][0]
+    scan_timestamps = file_data['scan_timestamps'] - file_data['scan_timestamps'][0]
+
 
     # Import data as variables
     platform_pos = file_data['platform_pos']
@@ -148,15 +153,34 @@ def main():
     platform_pos = platform_pos[shift_motion_index:]
 
     # Re-regularize(because it got sliced)
-    motion_timestamps = motion_timestamps - motion_timestamps[0]
+    motion_timestamps = regularize(motion_timestamps)
+    scan_timestamps = regularize(scan_timestamps)
+
+    # Cut ends off the data
+    # in seconds
+    cut_param = (5, 5)
+    motion_cut_param = (find_nearest(motion_timestamps, cut_param[0]), motion_timestamps.shape[0] - find_nearest(motion_timestamps, cut_param[1]))
+    scan_cut_param = (find_nearest(scan_timestamps, cut_param[0]), scan_timestamps.shape[0] - find_nearest(scan_timestamps, cut_param[1]))
+
+    motion_timestamps = motion_timestamps[motion_cut_param[0]:motion_cut_param[1]]
+    scan_timestamps = scan_timestamps[scan_cut_param[0]:scan_cut_param[1]]
+
+    platform_pos = platform_pos[motion_cut_param[0]:motion_cut_param[1]]
+    scan_data = scan_data[scan_cut_param[0]:scan_cut_param[1]]
+
+    motion_timestamps = regularize(motion_timestamps)
+    scan_timestamps=  regularize(scan_timestamps)
 
     # Prepare data entry into backprojection function
+    # By this point, all data processing should be completed
     entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
         'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
         'motion_timestamps': motion_timestamps, 'corner_reflector_pos': file_data['corner_reflector_pos']
     }
 
-    # Visualize the data (to see alignment)
+
+    # Visualize the data RTI
+
     visualize_data(entry_data)
 
     #file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input)
@@ -167,7 +191,6 @@ def main():
         image_ax = image_fig.add_subplot(111)
         h_img = image_ax.imshow(file_opened)
         plt.show()
-
 
 
 

@@ -55,7 +55,7 @@ def visualize_data(file_data):
     plt.show()
     image_fig = plt.figure()
     image_ax = image_fig.add_subplot(111)
-    h_img = image_ax.imshow(1 * np.log10(np.abs(scan_data)), extent=(
+    h_img = image_ax.imshow(np.log10(np.abs(scan_data)), extent=(
         file_data['range_bins'][0 ,0],
         file_data['range_bins'][0, -1],
         file_data['scan_timestamps'][-1]-file_data['scan_timestamps'][0],
@@ -141,6 +141,7 @@ def main():
     # Get the number of scans
     num_scans = scan_data_shape[0]
 
+    # SHIFTING CODE
     # Shift the data manually
     # Fetch align amount required
     shift_time = align_amt
@@ -150,14 +151,17 @@ def main():
     shift_scan_index = find_nearest(scan_timestamps, shift_time)
 
     # Slice the data arrays
+    # This data is sliced because the parts that don't overlap must be eliminated
     # Motion/platform position data by the index
     motion_timestamps = motion_timestamps[shift_motion_index:]
     platform_pos = platform_pos[shift_motion_index:]
+    
 
     # Re-regularize(because it got sliced)
     motion_timestamps = regularize(motion_timestamps)
     scan_timestamps = regularize(scan_timestamps)
 
+    # CROPPING CODE
     # Cut ends off the data
     # in seconds
     cut_param = (args.first_cutoff, args.last_cutoff)
@@ -173,11 +177,11 @@ def main():
     motion_timestamps = regularize(motion_timestamps)
     scan_timestamps =  regularize(scan_timestamps)
     updated_num_scans = scan_data.shape[0]
-    print('motion_timestamps before:', motion_timestamps)
+
 
     # Scale data - make everything have the same length M
     # This, however, stll means that the motion data has a different time window than scan_data
-    # TODO: merge the scalings so that we only have to do it once. 
+    # TODO: merge the scalings so that we only have to do it once.
     ratio = updated_num_scans / platform_pos.shape[0]
     scaled_platform_pos = np.empty((updated_num_scans, 3))
     for i in np.arange(0, 3, 1):
@@ -201,7 +205,6 @@ def main():
     motion_timestamps = np.interp(np.arange(0, updated_num_scans, 1) / ratio, np.arange(0, motion_timestamps.shape[0], 1), motion_timestamps[:])
     platform_pos = scaled_platform_pos
 
-    print('motion_timestamps:', motion_timestamps)
 
     # Prepare data entry into backprojection function
     # By this point, all data processing should be completed
@@ -224,6 +227,10 @@ def main():
         image_ax = image_fig.add_subplot(111)
         h_img = image_ax.imshow(file_opened)
         plt.show()
+    elif graph == 3:
+        print('scan_data:', np.max(np.log10(np.abs(scan_data))))
+        ranges_1, ranges_2 = compute_ranges(file_data)
+        print()
     # 0 indicates nothing visual happens
 
 

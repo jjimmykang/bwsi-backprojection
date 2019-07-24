@@ -173,27 +173,42 @@ def main():
     motion_timestamps = regularize(motion_timestamps)
     scan_timestamps =  regularize(scan_timestamps)
     updated_num_scans = scan_data.shape[0]
+    print('motion_timestamps before:', motion_timestamps)
 
-    #Scale data
+    # Scale data - make everything have the same length M
+    # This, however, stll means that the motion data has a different time window than scan_data
+    # TODO: merge the scalings so that we only have to do it once. 
     ratio = updated_num_scans / platform_pos.shape[0]
-    print('platform_pos.shape', platform_pos.shape)
-    print('scan_data.shape:', scan_data.shape)
-    print('motion_timestamps.shape:', motion_timestamps.shape)
-    print('scan_timestamps.shape:', scan_timestamps.shape)
-    print('misc info:', (np.arange(0, updated_num_scans, 1) / ratio).shape)
     scaled_platform_pos = np.empty((updated_num_scans, 3))
     for i in np.arange(0, 3, 1):
         scaled_platform_pos[:, i] = np.interp(np.arange(0, updated_num_scans, 1) / ratio, np.arange(0, platform_pos.shape[0], 1), platform_pos[:, i])
 
     motion_timestamps = np.interp(np.arange(0, updated_num_scans, 1) / ratio, np.arange(0, motion_timestamps.shape[0], 1), motion_timestamps[:])
+    platform_pos = scaled_platform_pos
+
+    # Code to make the motion data have the same window as scan data
+    time_cut = scan_timestamps[-1]
+    index_motion_cut = find_nearest(motion_timestamps, time_cut)
+    motion_timestamps = motion_timestamps[:index_motion_cut]
+    platform_pos = platform_pos[:index_motion_cut]
+
+    # Re-scale so the indexes are lined up again
+    ratio = updated_num_scans / platform_pos.shape[0]
+    scaled_platform_pos = np.empty((updated_num_scans, 3))
+    for i in np.arange(0, 3, 1):
+        scaled_platform_pos[:, i] = np.interp(np.arange(0, updated_num_scans, 1) / ratio, np.arange(0, platform_pos.shape[0], 1), platform_pos[:, i])
+
+    motion_timestamps = np.interp(np.arange(0, updated_num_scans, 1) / ratio, np.arange(0, motion_timestamps.shape[0], 1), motion_timestamps[:])
+    platform_pos = scaled_platform_pos
+
+    print('motion_timestamps:', motion_timestamps)
 
     # Prepare data entry into backprojection function
     # By this point, all data processing should be completed
-    entry_data = {'scan_data': scan_data, 'platform_pos': scaled_platform_pos,
+    entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
         'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
         'motion_timestamps': motion_timestamps, 'corner_reflector_pos': file_data['corner_reflector_pos']
     }
-    print('scan_data.shape:', scan_data.shape)
 
 
 

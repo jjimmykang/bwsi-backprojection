@@ -95,6 +95,14 @@ def find_nearest(array, value):
 def regularize(array):
     return array - array[0]
 
+def graph_signal(img):
+    plt.show()
+    image_fig = plt.figure()
+    image_ax = image_fig.add_subplot(111)
+    h_img = image_ax.imshow(img,
+    zorder=5)
+    plt.show()
+
 def main():
     # Argument Parser
     parser = argparse.ArgumentParser(description='align sar data')
@@ -104,6 +112,7 @@ def main():
     parser.add_argument('--window', type=float, help='length of real world window')
     parser.add_argument('--mode', type=int, help='toggle visualization mode')
     parser.add_argument('--shift', type=float, help='amount to shift the data by')
+    parser.add_argument('-a', '--automatic', action='store_true', help='toggle automatic mode')
     args = parser.parse_args()
 
     # Command line argument processing
@@ -128,38 +137,135 @@ def main():
     file_data = open_file(MANDRILL_1)
 
 
-    #Initialize timestamps
+
+    # Initialize timestamps
+    # Regularize at the same time
     motion_timestamps = file_data['motion_timestamps'] - file_data['motion_timestamps'][0]
     scan_timestamps = file_data['scan_timestamps'] - file_data['scan_timestamps'][0]
-
 
     # Import data as variables
     platform_pos = file_data['platform_pos']
     scan_data = file_data['scan_data']
+    range_bins = file_data['range_bins']
     # Set shape
     scan_data_shape =  file_data['scan_data'].shape
     # Get the number of scans
     num_scans = scan_data_shape[0]
 
-    # SHIFTING CODE
-    # Shift the data manually
-    # Fetch align amount required
-    shift_time = align_amt
+    # everything have the same index(same dimensional)
+    ratio = num_scans / platform_pos.shape[0]
+    scaled_platform_pos = np.empty((num_scans, 3))
+    for i in np.arange(0, 3, 1):
+        scaled_platform_pos[:, i] = np.interp(np.arange(0, num_scans, 1) / ratio, np.arange(0, platform_pos.shape[0], 1), platform_pos[:, i])
 
-    # Translate the shifted time to indexes for each of the timestamp lists
-    shift_motion_index = find_nearest(motion_timestamps, shift_time)
-    shift_scan_index = find_nearest(scan_timestamps, shift_time)
+    motion_timestamps = np.interp(np.arange(0, num_scans, 1) / ratio, np.arange(0, motion_timestamps.shape[0], 1), motion_timestamps[:])
+    platform_pos = scaled_platform_pos
 
-    # Slice the data arrays
-    # This data is sliced because the parts that don't overlap must be eliminated
-    # Motion/platform position data by the index
-    motion_timestamps = motion_timestamps[shift_motion_index:]
-    platform_pos = platform_pos[shift_motion_index:]
-    
+    print('motion_timestamps.shape:', motion_timestamps.shape)
+    print('platform_pos.shape:', platform_pos.shape)
+    print('scan_data.shape:', scan_data.shape)
+    print('scan_timestamps.shape:', scan_timestamps.shape)
+
+    entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
+        'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
+        'motion_timestamps': motion_timestamps, 'corner_reflector_pos': file_data['corner_reflector_pos']
+    }
+
+    if args.automatic == True:
+        shift_mode = 'automatic'
+    else:
+        shift_mode = 'manual'
+
+    if shift_mode == 'manual':
+        # SHIFTING CODE
+        # Shift the data manually
+        # Fetch align amount required
+        shift_time = align_amt
+
+        # Translate the shifted time to indexes for each of the timestamp lists
+        shift_motion_index = find_nearest(motion_timestamps, shift_time)
+
+        # Slice the data arrays
+        # This data is sliced because the parts that don't overlap must be eliminated
+        # Motion/platform position data by the index
+        motion_timestamps = motion_timestamps[shift_motion_index:]
+        platform_pos = platform_pos[shift_motion_index:]
+
+    elif shift_mode == 'automatic':
+        # regularize
+        motion_timestamps = regularize(motion_timestamps)
+        scan_timestamps = regularize(scan_timestamps)
+        print('motion_timestamps before processing:', motion_timestamps)
+
+        # SHIFTING AUTOMATICALLY
+        # Generate fake radar data from distance to reflectors
+        # Proposed strength of each reflector
+        signal_strength = 10
+        range_1, range_2 = compute_ranges(entry_data)
+
+        # Matrix for the signal map of the simulated reflectors
+        reflector_signal = np.zeros((range_1.shape[0], scan_data_shape[1]))
+        reflector_2_signal =np.zeros((range_2.shape[0], scan_data_shape[1]))
+
+        # Generates the intensity graph of the reflector
+        range_1_indexes = np.empty((range_1.shape))
+        range_2_indexes = np.empty((range_2.shape))
+
+        # Generate range 1 reflector intensity graph
+        i = 0
+        while i < range_1.shape[0]:
+            range_1_indexes[i] = find_nearest(range_bins, range_1[i])
+            i += 1
+
+        i = 0
+        while i < range_1.shape[0]:
+            reflector_signal[i, int(range_1_indexes[i])] = signal_strength
+            i += 1
+
+        # Generate same for range 2
+        i = 0
+        while i < range_2.shape[0]:
+            range_2_indexes[i] = find_nearest(range_bins, range_2[i])
+            i+= 1
+        i = 0
+        while i < range_2.shape[0]:
+            reflector_2_signal[i, int(range_2_indexes[i])] = signal_strength
+            i += 1
+
+        reflector_signal = reflector_signal + reflector_2_signal
+
+        # Create match filter
+        filtered_arr = np.empty((num_scans))
+        scan_data_abs = np.abs(scan_data)
+        shift = 0
+        print('scan_data.shape:', scan_data.shape)
+        while shift < num_scans:
+            multiplied_array = scan_data_abs[:scan_data_shape[0]-shift] * reflector_signal[shift:]
+            mult_value = np.sum(multiplied_array)
+            filtered_arr[shift] = np.abs(mult_value)
+            shift += 1
+
+        with np.printoptions(threshold=np.inf):
+            print(filtered_arr)
+            print('filtered_arr.shape:', filtered_arr.shape)
+
+        plt.show()
+        plt.plot(np.arange(0, filtered_arr.shape[0]), filtered_arr)
+        print('max_value:', np.max(filtered_arr))
+
+        index_to_shift = find_nearest(filtered_arr, np.max(filtered_arr))
+        print('index_to_shift:', index_to_shift)
+
+        motion_timestamps = motion_timestamps[index_to_shift:]
+        platform_pos = platform_pos[index_to_shift:]
+        motion_timestamps = regularize(motion_timestamps)
+        print('motion_timestamps after processing:', motion_timestamps)
+
 
     # Re-regularize(because it got sliced)
     motion_timestamps = regularize(motion_timestamps)
     scan_timestamps = regularize(scan_timestamps)
+    print('motion_timestmaps:', motion_timestamps)
 
     # CROPPING CODE
     # Cut ends off the data
@@ -214,15 +320,14 @@ def main():
     }
 
 
-
-    file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input)
-
     # Graph the data
     if graph == 1:
+        print('showing RTI')
         # 1 indicates RTI Plot
         visualize_data(entry_data)
     elif graph == 2:
         # 2 indicates Backprojected data
+        file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input)
         image_fig = plt.figure()
         image_ax = image_fig.add_subplot(111)
         h_img = image_ax.imshow(file_opened)

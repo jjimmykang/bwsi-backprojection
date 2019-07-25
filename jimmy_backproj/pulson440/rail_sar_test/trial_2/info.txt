@@ -1,0 +1,1 @@
+range window: 0.5-10m

@@ -1,0 +1,2 @@
+3.240606 seconds - between radar start & start of motion
+13.635512 seconds - effective length of trial

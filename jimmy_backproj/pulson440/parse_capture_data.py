@@ -1,3 +1,4 @@
+
 import numpy as np
 import pickle
 import csv
@@ -115,6 +116,3 @@ with open(PICKLE_DATA_FILENAME, 'wb') as p :
 
 
 # #ALIGNING DATA
-
-
-# #RESULT

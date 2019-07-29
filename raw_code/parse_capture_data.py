@@ -30,13 +30,16 @@ with open(MOTION_CAPTURE_FILENAME, newline='') as f:
             if (r_ind == 5) and (i in ALL_INFO_INDS) and (row[i] == "Position") :
                 POS_INFO_INDS.append(i)
         if r_ind >= 7 :
-            POSITIONS.append( ((row[POS_INFO_INDS[0]], row[POS_INFO_INDS[2]], row[POS_INFO_INDS[1]]), row[1]) )
+            if row[POS_INFO_INDS[0]] != "" :
+                POSITIONS.append( ((float(row[POS_INFO_INDS[0]]), float(row[POS_INFO_INDS[2]]), float(row[POS_INFO_INDS[1]])), float(row[1])) )
+            else :
+                POSITIONS.append( ((None, None, None), float(row[1])) )
         r_ind += 1
         # input()
         # print(POSITIONS)
 
 with open(PICKLE_DATA_FILENAME, 'wb') as p :
-    print(POSITIONS)
+    # print(POSITIONS)
     pickle.dump(POSITIONS, p)
 
 # #PARSING DATA FOR RADAR

@@ -4,10 +4,10 @@ import csv
 import sys
 
 MOTION_CAPTURE_FILENAME = sys.argv[1]
-RADAR_DATA_FILENAME = sys.argv[2]
+# RADAR_DATA_FILENAME = sys.argv[2]
 PICKLE_DATA_FILENAME = sys.argv[2]
 
-NAME_OF_OBJ = "S900"
+NAME_OF_OBJ = "radar_group6"
 
 # print(MOTION_CAPTURE_FILENAME)
 # print(RADAR_DATA_FILENAME)
@@ -30,12 +30,13 @@ with open(MOTION_CAPTURE_FILENAME, newline='') as f:
             if (r_ind == 5) and (i in ALL_INFO_INDS) and (row[i] == "Position") :
                 POS_INFO_INDS.append(i)
         if r_ind >= 7 :
-            POSITIONS.append( ((row[POS_INFO_INDS[0]], row[POS_INFO_INDS[1]], row[POS_INFO_INDS[2]]), row[1]) )
+            POSITIONS.append( ((row[POS_INFO_INDS[0]], row[POS_INFO_INDS[2]], row[POS_INFO_INDS[1]]), row[1]) )
         r_ind += 1
         # input()
         # print(POSITIONS)
 
 with open(PICKLE_DATA_FILENAME, 'wb') as p :
+    print(POSITIONS)
     pickle.dump(POSITIONS, p)
 
 # #PARSING DATA FOR RADAR

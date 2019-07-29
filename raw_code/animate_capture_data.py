@@ -8,7 +8,7 @@ MOTION_CAPTURE_FILENAME = sys.argv[1]
 # RADAR_DATA_FILENAME = sys.argv[2]
 # PICKLE_DATA_FILENAME = sys.argv[2]
 
-NAME_OF_OBJ = "S900"
+NAME_OF_OBJ = "radar_group6"
 
 # print(MOTION_CAPTURE_FILENAME)
 # print(RADAR_DATA_FILENAME)
@@ -111,9 +111,9 @@ print(data)
 # NOTE: Can't pass empty arrays into 3d version of plot()
 lines = [ax.plot(dat[0, 0:1], dat[1, 0:1], dat[2, 0:1])[0] for dat in data]
 
-ax.set_xlim(-15,15)
-ax.set_ylim(-15,15)
-ax.set_zlim(-15,15)
+ax.set_xlim(-6,-4)
+ax.set_ylim(1,2)
+ax.set_zlim(-3,1)
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.set_zlabel("z")

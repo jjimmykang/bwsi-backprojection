@@ -1,0 +1,2 @@
+1.Run parse_capture_data.py [PATH TO CSV] [PATH TO PICKLE FILE(it will create)]
+2. 

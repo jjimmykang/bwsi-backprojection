@@ -152,19 +152,18 @@ def main():
     # Get the number of scans
     num_scans = scan_data_shape[0]
 
-    # everything have the same index(same dimensional)
-    ratio = num_scans / platform_pos.shape[0]
-    scaled_platform_pos = np.empty((num_scans, 3))
-    for i in np.arange(0, 3, 1):
-        scaled_platform_pos[:, i] = np.interp(np.arange(0, num_scans, 1) / ratio, np.arange(0, platform_pos.shape[0], 1), platform_pos[:, i])
+    time_ratio = np.max(motion_timestamps) / np.max(scan_timestamps)
 
-    motion_timestamps = np.interp(np.arange(0, num_scans, 1) / ratio, np.arange(0, motion_timestamps.shape[0], 1), motion_timestamps[:])
+
+    # everything have the same index(same dimensional)
+    ratio = (num_scans * time_ratio) / platform_pos.shape[0]
+    scaled_platform_pos = np.empty((int(num_scans * time_ratio), 3))
+    for i in np.arange(0, 3, 1):
+        scaled_platform_pos[:, i] = np.interp(np.arange(0, int(num_scans * time_ratio), 1) / ratio, np.arange(0, platform_pos.shape[0], 1), platform_pos[:, i])
+
+    motion_timestamps = np.interp(np.arange(0, int(num_scans * time_ratio), 1) / ratio, np.arange(0, motion_timestamps.shape[0], 1), motion_timestamps[:])
     platform_pos = scaled_platform_pos
 
-    print('motion_timestamps.shape:', motion_timestamps.shape)
-    print('platform_pos.shape:', platform_pos.shape)
-    print('scan_data.shape:', scan_data.shape)
-    print('scan_timestamps.shape:', scan_timestamps.shape)
 
     entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
         'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
@@ -195,12 +194,11 @@ def main():
         # regularize
         motion_timestamps = regularize(motion_timestamps)
         scan_timestamps = regularize(scan_timestamps)
-        print('motion_timestamps before processing:', motion_timestamps)
 
         # SHIFTING AUTOMATICALLY
         # Generate fake radar data from distance to reflectors
         # Proposed strength of each reflector
-        signal_strength = 10
+
         range_1, range_2 = compute_ranges(entry_data)
 
         # Matrix for the signal map of the simulated reflectors
@@ -217,6 +215,7 @@ def main():
             range_1_indexes[i] = find_nearest(range_bins, range_1[i])
             i += 1
 
+        signal_strength = 10000
         i = 0
         while i < range_1.shape[0]:
             reflector_signal[i, int(range_1_indexes[i])] = signal_strength
@@ -235,38 +234,84 @@ def main():
         reflector_signal = reflector_signal + reflector_2_signal
 
         # Create match filter
-        filtered_arr = np.empty((num_scans))
+
         scan_data_abs = np.abs(scan_data)
+        regularized_point = (np.max(scan_data_abs) - np.min(scan_data_abs)) / 2
+        scan_data_regularized = scan_data_abs - regularized_point
+        lower_difference = reflector_signal.shape[0] - num_scans
+
+        filtered_arr = np.empty((lower_difference))
+        #graph_signal(scan_data_regularized)
         shift = 0
-        print('scan_data.shape:', scan_data.shape)
-        while shift < num_scans:
-            multiplied_array = scan_data_abs[:scan_data_shape[0]-shift] * reflector_signal[shift:]
+
+        while shift < lower_difference:
+            multiplied_array = scan_data_regularized * reflector_signal[shift:-(lower_difference - shift)]
             mult_value = np.sum(multiplied_array)
-            filtered_arr[shift] = np.abs(mult_value)
+            filtered_arr[shift] = mult_value
+
+            if shift % 50 == 0 and False:
+                plt.show()
+                image_fig = plt.figure()
+                image_ax = image_fig.add_subplot(111)
+                h_img = image_ax.imshow(scan_data_regularized, extent=(
+                    entry_data['range_bins'][0 ,0],
+                    entry_data['range_bins'][0, -1],
+                    entry_data['scan_timestamps'][-1]-entry_data['scan_timestamps'][0],
+                    0
+                ),
+                zorder=5)
+
+                # Plot the range trajectory of corner reflector 1
+                plt.plot(range_1[shift:], # x-values
+                         motion_timestamps[:motion_timestamps.shape[0]-shift], # y-values
+                         'r--', # Line format
+                         label='Corner Reflector 1',
+                         zorder=20) # Legend label
+
+                # Plot the range trajectory of corner reflector 2
+                plt.plot(range_2[shift:],# x-values
+                         motion_timestamps[:motion_timestamps.shape[0]-shift], # y-values
+                         'g--', # Line format
+                         label='Corner Reflector 2',
+                         zorder=20) # Legend label
+
+                plt.title('Shift number:' + str(shift))
+                plt.show()
+
             shift += 1
 
-        with np.printoptions(threshold=np.inf):
-            print(filtered_arr)
-            print('filtered_arr.shape:', filtered_arr.shape)
+        print('scan_data.shape:', scan_data.shape)
+        print('platform_pos.shape:', platform_pos.shape)
+        print('scan_timestamps.shape:', scan_timestamps.shape)
+        print('motion_timestamps.shape:', motion_timestamps.shape)
+
 
         plt.show()
         plt.plot(np.arange(0, filtered_arr.shape[0]), filtered_arr)
-        print('max_value:', np.max(filtered_arr))
 
         index_to_shift = find_nearest(filtered_arr, np.max(filtered_arr))
-        print('index_to_shift:', index_to_shift)
 
         motion_timestamps = motion_timestamps[index_to_shift:]
         platform_pos = platform_pos[index_to_shift:]
         motion_timestamps = regularize(motion_timestamps)
-        print('motion_timestamps after processing:', motion_timestamps)
+
 
 
     # Re-regularize(because it got sliced)
     motion_timestamps = regularize(motion_timestamps)
     scan_timestamps = regularize(scan_timestamps)
-    print('motion_timestmaps:', motion_timestamps)
 
+    entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
+        'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
+        'motion_timestamps': motion_timestamps, 'corner_reflector_pos': file_data['corner_reflector_pos']
+    }
+    '''
+    print('scan_data.shape:', scan_data.shape)
+    print('platform_pos.shape:', platform_pos.shape)
+    print('scan_timestamps.shape:', scan_timestamps.shape)
+    print('motion_timestamps.shape:', motion_timestamps.shape)
+    '''
+    visualize_data(entry_data)
     # CROPPING CODE
     # Cut ends off the data
     # in seconds
@@ -301,6 +346,7 @@ def main():
     index_motion_cut = find_nearest(motion_timestamps, time_cut)
     motion_timestamps = motion_timestamps[:index_motion_cut]
     platform_pos = platform_pos[:index_motion_cut]
+    print('platform_pos.shape:', platform_pos.shape)
 
     # Re-scale so the indexes are lined up again
     ratio = updated_num_scans / platform_pos.shape[0]
@@ -330,7 +376,7 @@ def main():
         file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input)
         image_fig = plt.figure()
         image_ax = image_fig.add_subplot(111)
-        h_img = image_ax.imshow(file_opened)
+        h_img = image_ax.imshow(file_opened, extent=(-(window_input/2), (window_input/2), -(window_input/2), (window_input/2)))
         plt.show()
     elif graph == 3:
         print('scan_data:', np.max(np.log10(np.abs(scan_data))))

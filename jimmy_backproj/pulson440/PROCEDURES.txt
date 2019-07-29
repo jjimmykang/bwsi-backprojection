@@ -1,2 +1,10 @@
-1.Run parse_capture_data.py [PATH TO CSV] [PATH TO PICKLE FILE(it will create)]
-2. 
+CAPTURING DATA
+1. Directory: final_event/trial_#
+      run control.py and output the text file into the folder.
+2. Filezilla the captured data over into jimmy_backproj/pulson440
+
+
+PROCESSING CAPTURED DATA
+1. Run parse_capture_data.py [PATH TO MOTION CSV] [PATH TO PICKLE FILE(it will create the file)]
+      This will transform the motion capture csv into a pkl file.
+2. Run

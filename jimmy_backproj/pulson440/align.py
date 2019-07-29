@@ -245,6 +245,7 @@ def match_filter(entry_data, shift_mode):
 def main():
     # Argument Parser
     parser = argparse.ArgumentParser(description='align sar data')
+    parser.add_argument('path_to_master', type=str, help='path to the master pickle file')
     parser.add_argument('first_cutoff', type=float, help='beginning cutoff in meters')
     parser.add_argument('last_cutoff', type=float, help='last cutoff in meters')
     parser.add_argument('--pixel', type=int, help='pixel dimensions each side')
@@ -273,7 +274,7 @@ def main():
         align_amt = 0
 
 
-    file_data = open_file(MANDRILL_1)
+    file_data = open_file(args.path_to_master)
 
     # Initialize timestamps
     # Regularize at the same time
@@ -383,6 +384,7 @@ def main():
         'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
         'motion_timestamps': motion_timestamps, 'corner_reflector_pos': file_data['corner_reflector_pos']
     }
+    print(entry_data['corner_reflector_pos'].shape)
 
 
     # Graph the data

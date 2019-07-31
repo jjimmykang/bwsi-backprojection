@@ -246,6 +246,7 @@ def main():
     # Argument Parser
     parser = argparse.ArgumentParser(description='align sar data')
     parser.add_argument('path_to_master', type=str, help='path to the master pickle file')
+    parser.add_argument('file_name', type=str, help='name of the master pickle file ')
     parser.add_argument('first_cutoff', type=float, help='beginning cutoff in meters')
     parser.add_argument('last_cutoff', type=float, help='last cutoff in meters')
     parser.add_argument('--pixel', type=int, help='pixel dimensions each side')
@@ -283,7 +284,7 @@ def main():
         range_cut_dist = 0
 
 
-    file_data = open_file(args.path_to_master)
+    file_data = open_file(args.path_to_master + '/' + args.file_name)
 
 
 
@@ -334,7 +335,6 @@ def main():
 
     # Manual range alignment
     if args.rangeshift != None:
-
         range_shift_distance = float(args.rangeshift)
         range_bins = np.asarray(entry_data['range_bins']) + range_shift_distance
         entry_data['range_bins'] = range_bins
@@ -433,12 +433,14 @@ def main():
         else:
             center_input = (0, 0)
         # 2 indicates Backprojected data
-        file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input, center=center_input)
+        backprojected_image = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input, center=center_input)
         image_fig = plt.figure()
         #image_ax = image_fig.add_subplot(111)
-        plt.imshow(file_opened, extent=(-(window_input/2), (window_input/2), -(window_input/2), (window_input/2)))
+        plt.imshow(backprojected_image, extent=(-(window_input/2), (window_input/2), -(window_input/2), (window_input/2)))
         plt.colorbar()
         plt.show()
+        with open(args.path_to_master + '/' + 'backprojected_data.pkl', 'wb') as p:
+            pickle.dump(backprojected_image, p)
     elif graph == 3:
         print('scan_data:', np.max(np.log10(np.abs(scan_data))))
         ranges_1, ranges_2 = compute_ranges(file_data)

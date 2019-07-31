@@ -13,6 +13,7 @@ from matplotlib.ticker import Formatter
 from matplotlib import transforms
 import time
 from backproj import backproject_vectorize_real
+import copy
 
 MANDRILL_1 = 'simulated_misaligned/Mandrill_1way_Misaligned1_data.pkl'
 MANDRILL_2 = 'Mandrill_1way_Misaligned2_data.pkl'
@@ -43,7 +44,7 @@ def compute_ranges(file_data):
 
     return ranges_1, ranges_2
 
-def visualize_data(file_data, title):
+def visualize_data(file_data, title, shift_distance):
 
     scan_data = file_data['scan_data']
     motion_timestamps = file_data['motion_timestamps']
@@ -54,15 +55,18 @@ def visualize_data(file_data, title):
     image_fig = plt.figure()
     image_ax = image_fig.add_subplot(111)
     image_fig.suptitle(title, fontsize=20)
-    h_img = image_ax.imshow(np.log10(np.abs(scan_data)), extent=(
-        file_data['range_bins'][0 ,0],
-        file_data['range_bins'][0, -1],
+    h_img = image_ax.imshow(np.abs(scan_data),
+     extent=(
+        file_data['range_bins'][0],
+        file_data['range_bins'][-1],
         file_data['scan_timestamps'][-1]-file_data['scan_timestamps'][0],
         0
     ),
     zorder=5)
 
     ranges_1, ranges_2 = compute_ranges(file_data)
+    #ranges_1 += shift_distance
+    #ranges_2 += shift_distance
 
     # Plot the range trajectory of corner reflector 1
     plt.plot(ranges_1, # x-values
@@ -102,7 +106,7 @@ def graph_signal(img):
     zorder=5)
     plt.show()
 
-def match_filter(entry_data, shift_mode):
+def match_filter(entry_data, shift_mode, align_amt=None):
 
     motion_timestamps = entry_data['motion_timestamps']
     scan_timestamps = entry_data['scan_timestamps']
@@ -116,6 +120,8 @@ def match_filter(entry_data, shift_mode):
         # SHIFTING CODE
         # Shift the data manually
         # Fetch align amount required
+        if align_amt == None:
+            align_amt = 0
         shift_time = align_amt
 
         # Translate the shifted time to indexes for each of the timestamp lists
@@ -217,11 +223,6 @@ def match_filter(entry_data, shift_mode):
 
             shift += 1
 
-        print('scan_data.shape:', scan_data.shape)
-        print('platform_pos.shape:', platform_pos.shape)
-        print('scan_timestamps.shape:', scan_timestamps.shape)
-        print('motion_timestamps.shape:', motion_timestamps.shape)
-
 
         plt.show()
         plt.plot(np.arange(0, filtered_arr.shape[0]), filtered_arr)
@@ -241,7 +242,6 @@ def match_filter(entry_data, shift_mode):
     }
 
 
-
 def main():
     # Argument Parser
     parser = argparse.ArgumentParser(description='align sar data')
@@ -253,6 +253,10 @@ def main():
     parser.add_argument('--mode', type=int, help='toggle visualization mode')
     parser.add_argument('--shift', type=float, help='amount to shift the data by')
     parser.add_argument('-a', '--automatic', action='store_true', help='toggle automatic mode')
+    parser.add_argument('-x', '--center_x', help='center for x')
+    parser.add_argument('-y', '--center_y', help='center for y')
+    parser.add_argument('-r', '--rangeshift', help='shift for range(m)')
+    parser.add_argument('--rangecut', help='beginning meters to cut')
     args = parser.parse_args()
 
     # Command line argument processing
@@ -273,16 +277,36 @@ def main():
     else:
         align_amt = 0
 
+    if not args.rangecut == None:
+        range_cut_dist = float(args.rangecut)
+    else:
+        range_cut_dist = 0
+
 
     file_data = open_file(args.path_to_master)
+
+
 
     # Initialize timestamps
     # Regularize at the same time
     motion_timestamps = file_data['motion_timestamps'] - file_data['motion_timestamps'][0]
     scan_timestamps = file_data['scan_timestamps'] - file_data['scan_timestamps'][0]
+    scan_timestamps = scan_timestamps / 1000
+
 
     # Import data as variables
-    platform_pos = file_data['platform_pos']
+    # Adjust platform_pos so that the y and z are switched(treat z as height)
+    platform_pos = copy.deepcopy(file_data['platform_pos'])
+
+
+    platform_pos[..., 0] = file_data['platform_pos'][..., 1]
+    platform_pos[..., 1] = file_data['platform_pos'][..., 0]
+
+
+    corner_reflector_pos = copy.deepcopy(file_data['corner_reflector_pos'])
+    corner_reflector_pos[..., 0] = file_data['corner_reflector_pos'][..., 1]
+    corner_reflector_pos[..., 1] = file_data['corner_reflector_pos'][..., 0]
+
     scan_data = file_data['scan_data']
     range_bins = file_data['range_bins']
     # Set shape
@@ -302,17 +326,31 @@ def main():
     platform_pos = scaled_platform_pos
 
 
+
     entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
         'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
-        'motion_timestamps': motion_timestamps, 'corner_reflector_pos': file_data['corner_reflector_pos']
+        'motion_timestamps': motion_timestamps, 'corner_reflector_pos': corner_reflector_pos
     }
+
+    # Manual range alignment
+    if args.rangeshift != None:
+
+        range_shift_distance = float(args.rangeshift)
+        range_bins = np.asarray(entry_data['range_bins']) + range_shift_distance
+        entry_data['range_bins'] = range_bins
+
+    else:
+        range_shift_distance = 0
+
 
     if args.automatic == True:
         shift_mode = 'automatic'
+        shift_amt = 0
     else:
         shift_mode = 'manual'
+        shift_amt = args.shift
 
-    entry_data = match_filter(entry_data, shift_mode)
+    entry_data = match_filter(entry_data, shift_mode, align_amt=shift_amt)
     motion_timestamps = entry_data['motion_timestamps']
     scan_timestamps = entry_data['scan_timestamps']
     platform_pos = entry_data['platform_pos']
@@ -320,22 +358,17 @@ def main():
     scan_data_shape = scan_data.shape
     num_scans = scan_data_shape[0]
     range_bins = entry_data['range_bins']
+    range_bin_zeroed = copy.deepcopy(range_bins) - range_bins[0]
 
-    print('finished match filtering')
-    '''
-    print('scan_data.shape:', scan_data.shape)
-    print('platform_pos.shape:', platform_pos.shape)
-    print('scan_timestamps.shape:', scan_timestamps.shape)
-    print('motion_timestamps.shape:', motion_timestamps.shape)
-    '''
-    #visualize_data(entry_data)
 
     # CROPPING CODE
     # Cut ends off the data
     # in seconds
     cut_param = (args.first_cutoff, args.last_cutoff)
+
     motion_cut_param = (find_nearest(motion_timestamps, cut_param[0]), motion_timestamps.shape[0] - find_nearest(motion_timestamps, cut_param[1]))
     scan_cut_param = (find_nearest(scan_timestamps, cut_param[0]), scan_timestamps.shape[0] - find_nearest(scan_timestamps, cut_param[1]))
+
 
     motion_timestamps = motion_timestamps[motion_cut_param[0]:motion_cut_param[1]]
     scan_timestamps = scan_timestamps[scan_cut_param[0]:scan_cut_param[1]]
@@ -347,8 +380,10 @@ def main():
     scan_timestamps =  regularize(scan_timestamps)
     updated_num_scans = scan_data.shape[0]
 
-    print('visualizing entry data')
-    visualize_data(entry_data, 'cropped code')
+    # Cut the rail noise(via user input)
+    index_to_cut = find_nearest(range_bin_zeroed, range_cut_dist)
+    scan_data[..., :index_to_cut] = 0
+
 
     # Scale data - make everything have the same length M
     # This, however, stll means that the motion data has a different time window than scan_data
@@ -381,23 +416,28 @@ def main():
     # Prepare data entry into backprojection function
     # By this point, all data processing should be completed
     entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
-        'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
-        'motion_timestamps': motion_timestamps, 'corner_reflector_pos': file_data['corner_reflector_pos']
+        'range_bins': range_bins, 'scan_timestamps': scan_timestamps,
+        'motion_timestamps': motion_timestamps, 'corner_reflector_pos': corner_reflector_pos
     }
-    print(entry_data['corner_reflector_pos'].shape)
+    print('corner_reflector_pos final:', entry_data['corner_reflector_pos'])
 
-
+    print('graphing the data')
     # Graph the data
     if graph == 1:
         print('showing RTI')
         # 1 indicates RTI Plot
-        visualize_data(entry_data, 'Final RTI')
+        visualize_data(entry_data, 'Final RTI', shift_distance=range_shift_distance)
     elif graph == 2:
+        if args.center_x != None and args.center_y != None:
+            center_input = (float(args.center_x), float(args.center_y))
+        else:
+            center_input = (0, 0)
         # 2 indicates Backprojected data
-        file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input)
+        file_opened = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input, center=center_input)
         image_fig = plt.figure()
-        image_ax = image_fig.add_subplot(111)
-        h_img = image_ax.imshow(file_opened, extent=(-(window_input/2), (window_input/2), -(window_input/2), (window_input/2)))
+        #image_ax = image_fig.add_subplot(111)
+        plt.imshow(file_opened, extent=(-(window_input/2), (window_input/2), -(window_input/2), (window_input/2)))
+        plt.colorbar()
         plt.show()
     elif graph == 3:
         print('scan_data:', np.max(np.log10(np.abs(scan_data))))

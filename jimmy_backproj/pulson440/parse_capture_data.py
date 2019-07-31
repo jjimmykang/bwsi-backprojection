@@ -35,7 +35,7 @@ with open(MOTION_CAPTURE_FILENAME, newline='') as f:
             if row[POS_INFO_INDS[0]] != "" :
                 POSITIONS.append( ((float(row[POS_INFO_INDS[0]]), float(row[POS_INFO_INDS[2]]), float(row[POS_INFO_INDS[1]])), float(row[1])) )
             else :
-                POSITIONS.append( ((None, None, None), float(row[1])) )
+                POSITIONS.append( ((np.nan, np.nan, np.nan), float(row[1])) )
         r_ind += 1
         # input()
         # print(POSITIONS)

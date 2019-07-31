@@ -10,6 +10,7 @@ from matplotlib.ticker import Formatter
 from matplotlib import transforms
 import time
 from backproj import backproject_vectorize_real
+from helper_functions import replace_nan
 
 def open_file(dir):
     '''Takes the paths of the pickle files and opens them
@@ -60,8 +61,11 @@ def main():
     motion_timestamps_temp = mocap_array[:, 1]
     motion_timestamps = np.asarray(list(motion_timestamps_temp[:]))
     print('motion_timestamps.shape:', motion_timestamps.shape)
-    return_data['platform_pos'] = platform_pos
-    return_data['motion_timestamps'] = motion_timestamps
+
+
+    # Fix NaNs with mocap data
+
+    return_data['motion_timestamps'], return_data['platform_pos'] = replace_nan(motion_timestamps, platform_pos)
 
     # Fetch platform data
     corner_reflector_pos = np.empty((2, 3))

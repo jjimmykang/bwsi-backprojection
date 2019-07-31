@@ -5,8 +5,18 @@ CAPTURING DATA
 
 
 PROCESSING CAPTURED DATA
-1. Put the mocap csv, raw radar text file, and the 2 reflector csvs in one folder. 
-2. Run parse_capture_data.py [PATH TO MOTION CSV] [PATH TO PICKLE FILE(it will create the file)] [CAPTURE_TYPE]
+1. Put the mocap csv, raw radar text file, and the 2 reflector csvs in one folder.
+
+2. Run unpack.py on the raw radar text file.
+
+3. Run parse_capture_data.py on the two reflector csvs, and the motion csvs and dump the pickle file to the same folder.
+    FORMAT: python parse_capture_data.py [PATH TO MOTION CSV] [PATH TO PICKLE FILE(it will create the file)] [CAPTURE_TYPE]
       This will transform the motion capture csv into a pkl file.
       a) CAPTURE_TYPE is a string which the reflectors are labeled with in the csv
-3. Run preprocess_data.py [PATH TO RADAR PKL] [PATH TO MOCAP PKL] [PATH TO FIRST REFLECTOR MOCAP] [PATH TO SECOND REFLECTOR MOCAP]
+            default for real mocap is radar_group6
+            the two reflectors are left_reflector and right_reflector
+
+4. Run preprocess_data.py on the pickle files to compile the data into a master pickle file to be handed to the alignment code.
+    FORMAT: preprocess_data.py [PATH TO RADAR PKL] [PATH TO MOCAP PKL] [PATH TO FIRST REFLECTOR MOCAP] [PATH TO SECOND REFLECTOR MOCAP]
+
+5. Run align.py on the master pickle file to process it. There are a variety of modes, use -h to look. 

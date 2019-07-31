@@ -18,7 +18,7 @@ POINTS2_DATA_DIR = 'data/2Points_1way_data.pkl'
 POINTS5_DATA_DIR = 'data/5Points_1way_data.pkl'
 MANDRILL_PIC_DIR = 'data/Mandrill_1way_data.pkl'
 
-def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=False, window=6):
+def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=False, window=6, center=(0, 0)):
     '''WORK IN PROGRES: Backprojects real data
     Arguments:
         data(dict)
@@ -48,29 +48,29 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=
     data_array = np.asarray(data['scan_data'])
     return_array = np.empty((x_pixels, y_pixels))
 
-    # Account for different range bin format for simulated and real
-    if simulated:
-        range_bins = np.asarray(data['range_bins'][0])
-    else:
-        range_bins = np.asarray(data['range_bins'])
+    range_bins = np.asarray(data['range_bins'])
+
 
     encoded_data = np.empty((x_pixels, y_pixels))
     linear = True
 
     num_scans = data['scan_data'].shape[0]
+    center_x = center[0]
+    center_y = center[1]
 
-    print('num_scans:', num_scans)
 
     print("Data fetched&generated: --- %s seconds ---" % (time.time() - absolute_start))
     # Generate coordinate system(120x120 array in which every value is a pair of coordinates(x,y))
-    cols = np.arange(-window_adjusted, window_adjusted, window/y_pixels)
-    rows = np.arange(window_adjusted, -window_adjusted, -window/x_pixels)
+    cols = np.arange(center_x-window_adjusted, center_x+window_adjusted, window/y_pixels)
+    rows = np.arange(center_y+window_adjusted, center_y-window_adjusted, -window/x_pixels)
     zetas = z_pixels
+
 
     position_map = np.empty((len(rows), len(cols), 3), dtype=np.float32)
     position_map[..., 0] = cols
     position_map[..., 1] = rows[:, None]
     position_map[..., 2] = zetas
+
 
     print("Position map generated: --- %s seconds ---" % (time.time() - absolute_start))
     # Broadcast the position map onto a 100x120x120x2 array. It's one hundred of the array to individually calculate the distance for.
@@ -81,20 +81,7 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=
 
     print("Position map projected: --- %s seconds ---" % (time.time() - absolute_start))
 
-    # This code processes the platform data from the radar
-    # Extrapolates position data if otherwise specified
-    if extrapolate_pos != None:
-        platform_pos = np.empty((num_scans, 3))
-        #platform_pos[..., :] = [extrapolate_pos[0], np.arange(extrapolate_pos[1], extrapolate_pos[2], (extrapolate_pos[2] - extrapolate_pos[1]) / num_scans), extrapolate_pos[3]]
-        platform_pos[..., 0] = extrapolate_pos[0]
-        platform_pos[..., 1] = np.arange(extrapolate_pos[1], extrapolate_pos[2], (extrapolate_pos[2] - extrapolate_pos[1]) / num_scans)
-        platform_pos[..., 2] = extrapolate_pos[3]
-        platform_pos = np.asarray(platform_pos)
-    else:
-        platform_pos = np.asarray(data['platform_pos'])
-
-
-
+    platform_pos = np.asarray(data['platform_pos'])
 
     # Convert platform_pos_2d into a 100x120x120x2 array to overlay over position map
     # It's basically the identical layer throughout the 100 pulses
@@ -113,7 +100,6 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=
     flattened_distance_lookup = np.reshape(distance_lookup_table, (num_scans, -1))
     signal_matrix = np.empty((num_scans, x_pixels * y_pixels), dtype=np.complex128)
     radar_counter = 0
-
 
     while radar_counter < num_scans:
         signal_matrix[radar_counter] = np.interp(flattened_distance_lookup[radar_counter], range_bins, data_array[radar_counter])

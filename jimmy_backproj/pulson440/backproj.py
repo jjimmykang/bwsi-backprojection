@@ -18,7 +18,7 @@ POINTS2_DATA_DIR = 'data/2Points_1way_data.pkl'
 POINTS5_DATA_DIR = 'data/5Points_1way_data.pkl'
 MANDRILL_PIC_DIR = 'data/Mandrill_1way_data.pkl'
 
-def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=False, window=6, center=(0, 0)):
+def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simulated=False, center=(0, 0)):
     '''WORK IN PROGRES: Backprojects real data
     Arguments:
         data(dict)
@@ -38,8 +38,8 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=
     print('started timer')
     absolute_start = time.time()
 
-    x_pixels = dimension
-    y_pixels = dimension
+    x_pixels = dimension[0] * ppm
+    y_pixels = dimension[1] * ppm 
     z_pixels = 0
 
     window_adjusted = window / 2
@@ -57,6 +57,9 @@ def backproject_vectorize_real(data, dimension, extrapolate_pos=None, simulated=
     num_scans = data['scan_data'].shape[0]
     center_x = center[0]
     center_y = center[1]
+
+    window_x = dimension[0]
+    window_y = dimension[1]
 
 
     print("Data fetched&generated: --- %s seconds ---" % (time.time() - absolute_start))

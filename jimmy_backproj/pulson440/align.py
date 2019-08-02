@@ -62,7 +62,7 @@ def visualize_data(file_data, title, shift_distance):
         file_data['scan_timestamps'][-1]-file_data['scan_timestamps'][0],
         0
     ),
-    zorder=5)
+    zorder=5, aspect='auto')
 
     ranges_1, ranges_2 = compute_ranges(file_data)
     #ranges_1 += shift_distance
@@ -191,41 +191,9 @@ def match_filter(entry_data, shift_mode, align_amt=None):
             multiplied_array = scan_data_regularized * reflector_signal[shift:-(lower_difference - shift)]
             mult_value = np.sum(multiplied_array)
             filtered_arr[shift] = mult_value
-
-            if shift % 50 == 0 and False:
-                plt.show()
-                image_fig = plt.figure()
-                image_ax = image_fig.add_subplot(111)
-                h_img = image_ax.imshow(scan_data_regularized, extent=(
-                    entry_data['range_bins'][0 ,0],
-                    entry_data['range_bins'][0, -1],
-                    entry_data['scan_timestamps'][-1]-entry_data['scan_timestamps'][0],
-                    0
-                ),
-                zorder=5)
-
-                # Plot the range trajectory of corner reflector 1
-                plt.plot(range_1[shift:], # x-values
-                         motion_timestamps[:motion_timestamps.shape[0]-shift], # y-values
-                         'r--', # Line format
-                         label='Corner Reflector 1',
-                         zorder=20) # Legend label
-
-                # Plot the range trajectory of corner reflector 2
-                plt.plot(range_2[shift:],# x-values
-                         motion_timestamps[:motion_timestamps.shape[0]-shift], # y-values
-                         'g--', # Line format
-                         label='Corner Reflector 2',
-                         zorder=20) # Legend label
-
-                plt.title('Shift number:' + str(shift))
-                plt.show()
-
             shift += 1
 
 
-        plt.show()
-        plt.plot(np.arange(0, filtered_arr.shape[0]), filtered_arr)
 
         index_to_shift = find_nearest(filtered_arr, np.max(filtered_arr))
 
@@ -249,8 +217,9 @@ def main():
     parser.add_argument('file_name', type=str, help='name of the master pickle file ')
     parser.add_argument('first_cutoff', type=float, help='beginning cutoff in meters')
     parser.add_argument('last_cutoff', type=float, help='last cutoff in meters')
-    parser.add_argument('--pixel', type=int, help='pixel dimensions each side')
-    parser.add_argument('--window', type=float, help='length of real world window')
+    parser.add_argument('--pixelx', type=int, help='pixel dimensions x side')
+    parser.add_argument('--pixely', type=int, help='pixel dimensions y side')
+    parser.add_argument('--ppm', type=float, help='pixels per meter')
     parser.add_argument('--mode', type=int, help='toggle visualization mode')
     parser.add_argument('--shift', type=float, help='amount to shift the data by')
     parser.add_argument('-a', '--automatic', action='store_true', help='toggle automatic mode')
@@ -258,18 +227,34 @@ def main():
     parser.add_argument('-y', '--center_y', help='center for y')
     parser.add_argument('-r', '--rangeshift', help='shift for range(m)')
     parser.add_argument('--rangecut', help='beginning meters to cut')
+    parser.add_argument('--farcutoff', help='cut off the range bins that are far away.')
     args = parser.parse_args()
 
     # Command line argument processing
     graph = args.mode
 
-    if args.pixel == None:
-        pixel_input = 120
+    if args.pixelx == None:
+        pixel_input_x = 120
     else:
-        pixel_input = args.pixel
+        pixel_input_x = args.pixelx
 
-    if not args.window == None:
-        window_input = int(args.window)
+    if args.pixely == None:
+        pixel_input_y = 120
+    else:
+        pixel_input_y = args.pixely
+
+    if args.ppm == None:
+        ppm_input = 20
+    else:
+        ppm_input = args.ppm
+
+    if not args.windowx == None:
+        window_input_x = int(args.windowx)
+    else:
+        window_input = 6
+
+    if not args.windowy == None:
+        window_input_y = int(args.windowy)
     else:
         window_input = 6
 
@@ -283,9 +268,13 @@ def main():
     else:
         range_cut_dist = 0
 
+    if not args.farcutoff == None:
+        far_cutoff_dist = float(args.farcutoff)
+    else:
+        far_cutoff_dist = 0
+
 
     file_data = open_file(args.path_to_master + '/' + args.file_name)
-
 
 
     # Initialize timestamps
@@ -308,10 +297,16 @@ def main():
     corner_reflector_pos[..., 0] = file_data['corner_reflector_pos'][..., 1]
     corner_reflector_pos[..., 1] = file_data['corner_reflector_pos'][..., 0]
 
-    scan_data = file_data['scan_data']
-    range_bins = file_data['range_bins']
+
+    range_bin_zeroed = copy.deepcopy(file_data['range_bins']) - file_data['range_bins'][0]
+
+    # Cut off far range bins
+    far_cutoff_index = find_nearest(range_bin_zeroed, far_cutoff_dist)
+    scan_data = copy.deepcopy(file_data['scan_data'])[..., :-(far_cutoff_index+1)]
+    range_bins = copy.deepcopy(file_data['range_bins'])[..., :-(far_cutoff_index+1)]
+
     # Set shape
-    scan_data_shape =  file_data['scan_data'].shape
+    scan_data_shape = scan_data.shape
     # Get the number of scans
     num_scans = scan_data_shape[0]
 
@@ -327,15 +322,15 @@ def main():
     platform_pos = scaled_platform_pos
 
 
-
     entry_data = {'scan_data': scan_data, 'platform_pos': platform_pos,
-        'range_bins': file_data['range_bins'], 'scan_timestamps': scan_timestamps,
+        'range_bins': range_bins, 'scan_timestamps': scan_timestamps,
         'motion_timestamps': motion_timestamps, 'corner_reflector_pos': corner_reflector_pos
     }
 
+
     # Manual range alignment
     if args.rangeshift != None:
-        range_shift_distance = float(args.rangeshift)
+        range_shift_distance = -float(args.rangeshift)
         range_bins = np.asarray(entry_data['range_bins']) + range_shift_distance
         entry_data['range_bins'] = range_bins
 
@@ -358,7 +353,7 @@ def main():
     scan_data_shape = scan_data.shape
     num_scans = scan_data_shape[0]
     range_bins = entry_data['range_bins']
-    range_bin_zeroed = copy.deepcopy(range_bins) - range_bins[0]
+
 
 
     # CROPPING CODE
@@ -421,6 +416,17 @@ def main():
     }
     print('corner_reflector_pos final:', entry_data['corner_reflector_pos'])
 
+    # calculate average platform_pos so we can window properly
+    average_platform_pos = (platform_pos[-1] + platform_pos[0]) / 2
+    print('platform_pos[0]:', platform_pos[0])
+    print('platform_pos[-1]:', platform_pos[-1])
+    print('average_platform_pos:', average_platform_pos)
+
+    # Also calculate recommended center
+    recommended_center = (average_platform_pos + corner_reflector_pos[0] + corner_reflector_pos[1])/3
+    print('RECOMMENDED CENTER:', recommended_center)
+
+
     print('graphing the data')
     # Graph the data
     if graph == 1:
@@ -433,7 +439,7 @@ def main():
         else:
             center_input = (0, 0)
         # 2 indicates Backprojected data
-        backprojected_image = backproject_vectorize_real(entry_data, pixel_input, simulated=True, window=window_input, center=center_input)
+        backprojected_image = backproject_vectorize_real(entry_data, (pixel_input_x, pixel_input_y), ppm_input, simulated=True, center=center_input)
         image_fig = plt.figure()
         #image_ax = image_fig.add_subplot(111)
         plt.imshow(backprojected_image, extent=(-(window_input/2), (window_input/2), -(window_input/2), (window_input/2)))

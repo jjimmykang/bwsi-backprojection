@@ -1,0 +1,3 @@
+first drone flight test
+up left right down
+range 2-10m

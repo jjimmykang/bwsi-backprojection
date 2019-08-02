@@ -17,6 +17,6 @@ PROCESSING CAPTURED DATA
             the two reflectors are left_reflector and right_reflector
 
 4. Run preprocess_data.py on the pickle files to compile the data into a master pickle file to be handed to the alignment code.
-    FORMAT: preprocess_data.py [PATH TO RADAR PKL] [PATH TO MOCAP PKL] [PATH TO FIRST REFLECTOR MOCAP] [PATH TO SECOND REFLECTOR MOCAP]
+    FORMAT: preprocess_data.py [PATH TO FOLDER] [NAME OF RADAR PKL] [NAME OF MOCAP PKL] [NAME OF FIRST REFLECTOR MOCAP] [NAME OF SECOND REFLECTOR MOCAP]
 
-5. Run align.py on the master pickle file to process it. There are a variety of modes, use -h to look. 
+5. Run align.py on the master pickle file to process it. There are a variety of modes, use -h to look.

@@ -530,8 +530,8 @@ def main():
             center_input = (0, 0)
         print('CENTER:', center_input)
         # 2 indicates Backprojected data
-        backprojected_image = backproject_vectorize_real(entry_data, (x_input, y_input), ppm_input, simulated=True, center=center_input)
-        print('backprojected_image.shape:', backprojected_image.shape)
+        #backprojected_image = backproject_vectorize_real(entry_data, (x_input, y_input), ppm_input, simulated=True, center=center_input)
+        #print('backprojected_image.shape:', backprojected_image.shape)
         '''
         image_fig = plt.figure()
         #image_ax = image_fig.add_subplot(111)
@@ -543,6 +543,8 @@ def main():
         plt.colorbar()
         plt.show()
         '''
+        file_data = open('real_sar/real_image.pkl')
+        backprojected_image = pickle.load(file_data)
         display_backprojected_image(backprojected_image, (center_input[0]-(x_input/2), center_input[0]+(x_input/2)),
                                     (center_input[1]+(y_input/2), center_input[1]-(y_input/2)), args.path_to_master + '/' + 'final_image.png')
         window_x = x_input / 2
@@ -555,7 +557,7 @@ def main():
 
         cols = np.arange(center_x-window_x, center_x+window_x, (window_x * 2)/x_pixels)
         rows = np.arange(center_y-window_y, center_y+window_y, (window_y * 2)/y_pixels)
-        save_data_pickle(backprojected_image, cols, rows, args.path_to_master + '/' + 'final_pickle.pkl')
+        save_data_pickle(backprojected_image, cols, rows, 'final_pickle.pkl')
         with open(args.path_to_master + '/' + 'backprojected_data.pkl', 'wb') as p:
             pickle.dump(backprojected_image, p)
     elif graph == 3:

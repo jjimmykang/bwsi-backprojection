@@ -44,12 +44,12 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
 
     # Generate needed objects
     data_array = np.asarray(data['scan_data'])
-    return_array = np.empty((int(x_pixels), int(y_pixels)))
+    return_array = np.empty((int(y_pixels), int(x_pixels)))
 
     range_bins = np.asarray(data['range_bins'])
 
 
-    encoded_data = np.empty((x_pixels, y_pixels))
+    encoded_data = np.empty((y_pixels, x_pixels))
     linear = True
 
     num_scans = data['scan_data'].shape[0]
@@ -66,14 +66,17 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
     print("Data fetched&generated: --- %s seconds ---" % (time.time() - absolute_start))
     # Generate coordinate system(120x120 array in which every value is a pair of coordinates(x,y))
     cols = np.arange(center_x-window_x, center_x+window_x, (window_x * 2)/x_pixels)
-    rows = np.arange(center_y+window_y, center_y-window_y, -(window_y * 2)/y_pixels)
+    rows = np.arange(center_y-window_y, center_y+window_y, (window_y * 2)/y_pixels)
     zetas = z_pixels
 
 
-    position_map = np.empty((len(rows), len(cols), 3), dtype=np.float32)
+    position_map = np.empty((y_pixels, x_pixels, 3), dtype=np.float32)
     position_map[..., 0] = cols
     position_map[..., 1] = rows[:, None]
     position_map[..., 2] = zetas
+
+    print('position_map')
+    print(position_map)
 
 
     print("Position map generated: --- %s seconds ---" % (time.time() - absolute_start))
@@ -93,7 +96,7 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
     platform_pos_3d[:, :, :, :] = platform_pos[:, None, None, :]
 
     # With the platform_map_3d, and position_map_3d, we can generate the distance lookup table.
-    distance_lookup_table = np.empty((num_scans, x_pixels, y_pixels))
+    distance_lookup_table = np.empty((num_scans, y_pixels, x_pixels))
     distance_lookup_table = np.sqrt(np.power((position_map_3d[..., 0] - platform_pos_3d[..., 0]), 2) + \
                                     np.power((position_map_3d[..., 1] - platform_pos_3d[..., 1]), 2) + \
                                     np.power((position_map_3d[..., 2] - platform_pos_3d[..., 2]), 2))

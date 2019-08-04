@@ -221,6 +221,87 @@ def match_filter(entry_data, shift_mode, align_amt=None):
     }
 
 
+def display_backprojected_image(backprojected_img, x_axis_bounds, y_axis_bounds, png_filename,
+                                x_label='X (m)', y_label='Y (m)', title='Backprojected Image',
+                                aspect='equal'):
+    '''Display and save backprojected image with labels.
+
+    Args:
+        backprojected_img (numpy.ndarray)
+            Matrix containing backprojected image. Assumes that rows correspond to y-axis and
+            columns correspond to x-axis.
+
+        x_axis_bounds (tuple)
+            First element is the minimum/leftmost/first column's x-value while second element is the
+            maximum/rightmost/last column's x-value. These should be in meters.
+
+        y_axis_bounds (tuple)
+            First element is the minimum/bottom/last row's y-value while second element is the
+            maximum/top/first row's x-value. These should be in meters.
+
+        png_filename (str)
+            Path and name of PNG file of image to save. Must include PNG extension.
+
+        x_label (string)
+            X-axis label. Defaults to 'X (m)'.
+
+        y_label (string)
+            Y-axis label. Defaults to 'Y (m)'
+
+        title (string)
+            Title of image. Defaults to 'Backprojected Image'.
+
+        aspect (string)
+            Aspect ratio of displayed image. This should be any of the options supported by
+            the 'aspect' keyword argument of matplotlib.pyplot.imshow
+            (https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.pyplot.imshow.html). Defaults to
+            'equal' so that pixels present their true aspect ratio.
+    '''
+    # Display the backprojected image
+    hFig = plt.figure()
+    hAx = plt.subplot(111)
+    hImg = hAx.imshow(backprojected_img, extent=x_axis_bounds + y_axis_bounds)
+    hAx.set_aspect(aspect=aspect)
+    hAx.set_xlabel(x_label)
+    hAx.set_ylabel(y_label)
+    hAx.set_title(title)
+    hFig.colorbar(hImg)
+
+    # maximzie window before showing and saving
+    # TODO: This may need to change depending on you matplotlib backend; refer to this post for
+    # some potential solutions,
+    # https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen/32428266
+    figManager = plt.get_current_fig_manager()
+    figManager.window.showMaximized()
+    plt.show()
+
+    # Save the iamge
+    hFig.savefig(png_filename)
+
+def save_data_pickle(backprojected_img, x_axis, y_axis, pkl_filename):
+    """Save data into pickle.
+
+    Args:
+        backprojected_img (numpy.ndarray)
+            Matrix containing backprojected image. Assumes that rows correspond to y-axis and
+            columns correspond to x-axis.
+
+        x_axis (numpy.ndarray)
+            The x-coordinates of each column in the backprojected image. These should be in meters.
+
+        y_axis (tuple)
+            The y-coordinates of each row in the backprojected image. These should be in meters.
+
+        pkl_filename (str)
+            Path and name of pickle file to save.
+    """
+    # Open and save pickle
+    with open(pkl_filename, 'wb') as f:
+        data = {'backprojected_img': backprojected_img,
+                'x_axis': x_axis,
+                'y_axis': y_axis}
+        pickle.dump(data, f)
+
 def main():
     # Argument Parser
     parser = argparse.ArgumentParser(description='align sar data')
@@ -294,15 +375,17 @@ def main():
     # Import data as variables
     # Adjust platform_pos so that the y and z are switched(treat z as height)
     platform_pos = copy.deepcopy(file_data['platform_pos'])
+    print('platform_pos raw:', platform_pos)
 
-
-    platform_pos[..., 0] = file_data['platform_pos'][..., 1]
-    platform_pos[..., 1] = file_data['platform_pos'][..., 0]
+    #platform_pos[..., 0] = file_data['platform_pos'][..., 1]
+    #platform_pos[..., 1] = file_data['platform_pos'][..., 0]
+    print('platform_pos:', platform_pos)
 
 
     corner_reflector_pos = copy.deepcopy(file_data['corner_reflector_pos'])
-    corner_reflector_pos[..., 0] = file_data['corner_reflector_pos'][..., 1]
-    corner_reflector_pos[..., 1] = file_data['corner_reflector_pos'][..., 0]
+    #corner_reflector_pos[..., 0] = file_data['corner_reflector_pos'][..., 1]
+    #corner_reflector_pos[..., 1] = file_data['corner_reflector_pos'][..., 0]
+    print('corner_reflector_pos:', corner_reflector_pos)
 
 
     range_bin_zeroed = copy.deepcopy(file_data['range_bins']) - file_data['range_bins'][0]
@@ -449,16 +532,30 @@ def main():
         # 2 indicates Backprojected data
         backprojected_image = backproject_vectorize_real(entry_data, (x_input, y_input), ppm_input, simulated=True, center=center_input)
         print('backprojected_image.shape:', backprojected_image.shape)
-        for i in np.arange(0, 3):
-            backprojected_image = np.rot90(backprojected_image)
+        '''
         image_fig = plt.figure()
         #image_ax = image_fig.add_subplot(111)
         if not vmax_input == 0:
-            plt.imshow(backprojected_image, extent=(center_input[1]-(y_input/2), center_input[1]+(y_input/2), center_input[0]-(x_input/2), center_input[0]+(y_input/2)), vmax=vmax_input)
+            plt.imshow(backprojected_image, extent=(center_input[0]-(x_input/2), center_input[0]+(x_input/2), center_input[1]-(y_input/2), center_input[1]+(y_input/2)), vmax=vmax_input)
         else:
-            plt.imshow(backprojected_image, extent=(center_input[1]-(y_input/2), center_input[1]+(x_input/2), center_input[0]-(x_input/2), center_input[0]+(x_input/2)))
+            plt.imshow(backprojected_image, extent=(center_input[0]-(x_input/2), center_input[0]+(x_input/2), center_input[1]+(y_input/2), center_input[1]-(y_input/2)))
+            #plt.imshow(backprojected_image, extent=(center_input[1]-(y_input/2), center_input[1]+(y_input/2), center_input[0]-(x_input/2), center_input[0]+(x_input/2)))
         plt.colorbar()
         plt.show()
+        '''
+        display_backprojected_image(backprojected_image, (center_input[0]-(x_input/2), center_input[0]+(x_input/2)),
+                                    (center_input[1]+(y_input/2), center_input[1]-(y_input/2)), args.path_to_master + '/' + 'final_image.png')
+        window_x = x_input / 2
+        window_y = y_input / 2
+        center_x = center_input[0]
+        center_y = center_input[1]
+
+        x_pixels = int(np.round(x_input * ppm_input))
+        y_pixels = int(np.round(y_input * ppm_input))
+
+        cols = np.arange(center_x-window_x, center_x+window_x, (window_x * 2)/x_pixels)
+        rows = np.arange(center_y-window_y, center_y+window_y, (window_y * 2)/y_pixels)
+        save_data_pickle(backprojected_image, cols, rows, args.path_to_master + '/' + 'final_pickle.pkl')
         with open(args.path_to_master + '/' + 'backprojected_data.pkl', 'wb') as p:
             pickle.dump(backprojected_image, p)
     elif graph == 3:

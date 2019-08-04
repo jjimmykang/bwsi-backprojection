@@ -76,7 +76,6 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
     position_map[..., 2] = zetas
 
     print('position_map')
-    print(position_map)
 
 
     print("Position map generated: --- %s seconds ---" % (time.time() - absolute_start))

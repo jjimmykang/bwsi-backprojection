@@ -49,6 +49,14 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
     range_bins = np.asarray(data['range_bins'])
 
 
+    # SNR Normalization?
+    range_bins_extended = np.empty((data_array.shape[0], data_array.shape[1]))
+    range_bins_extended[..., :] = range_bins
+    range_bins_extended = range_bins_extended ** 2
+
+    data_array = data_array * range_bins_extended
+
+
     encoded_data = np.empty((y_pixels, x_pixels))
     linear = True
 

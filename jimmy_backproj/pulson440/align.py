@@ -44,7 +44,7 @@ def compute_ranges(file_data):
 
     return ranges_1, ranges_2
 
-def visualize_data(file_data, title, shift_distance):
+def visualize_data(file_data, title, shift_distance, vmax):
 
     scan_data = file_data['scan_data']
     motion_timestamps = file_data['motion_timestamps']
@@ -53,16 +53,27 @@ def visualize_data(file_data, title, shift_distance):
     # Plot
     plt.show()
     image_fig = plt.figure()
-    image_ax = image_fig.add_subplot(111)
+
     image_fig.suptitle(title, fontsize=20)
-    h_img = image_ax.imshow(np.abs(scan_data),
-     extent=(
-        file_data['range_bins'][0],
-        file_data['range_bins'][-1],
-        file_data['scan_timestamps'][-1]-file_data['scan_timestamps'][0],
-        0
-    ),
-    zorder=5, aspect='auto')
+    if not vmax == 0:
+        h_img = plt.imshow(np.abs(scan_data),
+         extent=(
+            file_data['range_bins'][0],
+            file_data['range_bins'][-1],
+            file_data['scan_timestamps'][-1]-file_data['scan_timestamps'][0],
+            0
+        ),
+        zorder=5, aspect='auto', vmax=vmax)
+    else:
+        h_img = plt.imshow(np.abs(scan_data),
+         extent=(
+            file_data['range_bins'][0],
+            file_data['range_bins'][-1],
+            file_data['scan_timestamps'][-1]-file_data['scan_timestamps'][0],
+            0
+        ),
+        zorder=5, aspect='auto')
+    plt.colorbar()
 
     ranges_1, ranges_2 = compute_ranges(file_data)
     #ranges_1 += shift_distance
@@ -217,9 +228,9 @@ def main():
     parser.add_argument('file_name', type=str, help='name of the master pickle file ')
     parser.add_argument('first_cutoff', type=float, help='beginning cutoff in meters')
     parser.add_argument('last_cutoff', type=float, help='last cutoff in meters')
-    parser.add_argument('--pixelx', type=int, help='pixel dimensions x side')
-    parser.add_argument('--pixely', type=int, help='pixel dimensions y side')
-    parser.add_argument('--ppm', type=float, help='pixels per meter')
+    parser.add_argument('--realx', type=float, help='Real world dimension x side')
+    parser.add_argument('--realy', type=float, help='Real world dimension y side')
+    parser.add_argument('--ppm', type=int, help='pixels per meter')
     parser.add_argument('--mode', type=int, help='toggle visualization mode')
     parser.add_argument('--shift', type=float, help='amount to shift the data by')
     parser.add_argument('-a', '--automatic', action='store_true', help='toggle automatic mode')
@@ -228,35 +239,26 @@ def main():
     parser.add_argument('-r', '--rangeshift', help='shift for range(m)')
     parser.add_argument('--rangecut', help='beginning meters to cut')
     parser.add_argument('--farcutoff', help='cut off the range bins that are far away.')
+    parser.add_argument('--vmax', help='v-max on the display')
     args = parser.parse_args()
 
     # Command line argument processing
     graph = args.mode
 
-    if args.pixelx == None:
-        pixel_input_x = 120
+    if args.realx == None:
+        x_input = 6
     else:
-        pixel_input_x = args.pixelx
+        x_input = args.realx
 
-    if args.pixely == None:
-        pixel_input_y = 120
+    if args.realy == None:
+        y_input = 6
     else:
-        pixel_input_y = args.pixely
+        y_input = args.realy
 
     if args.ppm == None:
         ppm_input = 20
     else:
         ppm_input = args.ppm
-
-    if not args.windowx == None:
-        window_input_x = int(args.windowx)
-    else:
-        window_input = 6
-
-    if not args.windowy == None:
-        window_input_y = int(args.windowy)
-    else:
-        window_input = 6
 
     if not args.shift == None:
         align_amt = args.shift
@@ -272,6 +274,11 @@ def main():
         far_cutoff_dist = float(args.farcutoff)
     else:
         far_cutoff_dist = 0
+
+    if not args.vmax == None:
+        vmax_input = float(args.vmax)
+    else:
+        vmax_input = 0
 
 
     file_data = open_file(args.path_to_master + '/' + args.file_name)
@@ -432,17 +439,24 @@ def main():
     if graph == 1:
         print('showing RTI')
         # 1 indicates RTI Plot
-        visualize_data(entry_data, 'Final RTI', shift_distance=range_shift_distance)
+        visualize_data(entry_data, 'Final RTI', shift_distance=range_shift_distance, vmax=vmax_input)
     elif graph == 2:
         if args.center_x != None and args.center_y != None:
             center_input = (float(args.center_x), float(args.center_y))
         else:
             center_input = (0, 0)
+        print('CENTER:', center_input)
         # 2 indicates Backprojected data
-        backprojected_image = backproject_vectorize_real(entry_data, (pixel_input_x, pixel_input_y), ppm_input, simulated=True, center=center_input)
+        backprojected_image = backproject_vectorize_real(entry_data, (x_input, y_input), ppm_input, simulated=True, center=center_input)
+        print('backprojected_image.shape:', backprojected_image.shape)
+        for i in np.arange(0, 3):
+            backprojected_image = np.rot90(backprojected_image)
         image_fig = plt.figure()
         #image_ax = image_fig.add_subplot(111)
-        plt.imshow(backprojected_image, extent=(-(window_input/2), (window_input/2), -(window_input/2), (window_input/2)))
+        if not vmax_input == 0:
+            plt.imshow(backprojected_image, extent=(center_input[1]-(y_input/2), center_input[1]+(y_input/2), center_input[0]-(x_input/2), center_input[0]+(y_input/2)), vmax=vmax_input)
+        else:
+            plt.imshow(backprojected_image, extent=(center_input[1]-(y_input/2), center_input[1]+(x_input/2), center_input[0]-(x_input/2), center_input[0]+(x_input/2)))
         plt.colorbar()
         plt.show()
         with open(args.path_to_master + '/' + 'backprojected_data.pkl', 'wb') as p:

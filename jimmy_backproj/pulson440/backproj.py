@@ -38,15 +38,13 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
     print('started timer')
     absolute_start = time.time()
 
-    x_pixels = dimension[0] * ppm
-    y_pixels = dimension[1] * ppm 
+    x_pixels = int(np.round(dimension[0] * ppm))
+    y_pixels = int(np.round(dimension[1] * ppm))
     z_pixels = 0
-
-    window_adjusted = window / 2
 
     # Generate needed objects
     data_array = np.asarray(data['scan_data'])
-    return_array = np.empty((x_pixels, y_pixels))
+    return_array = np.empty((int(x_pixels), int(y_pixels)))
 
     range_bins = np.asarray(data['range_bins'])
 
@@ -58,14 +56,17 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
     center_x = center[0]
     center_y = center[1]
 
-    window_x = dimension[0]
-    window_y = dimension[1]
+    window_x = dimension[0] / 2
+    window_y = dimension[1] / 2
+
+    print('Pixel dimensions:', (x_pixels, y_pixels))
+    print('Physical Window:', (dimension[0], dimension[1]))
 
 
     print("Data fetched&generated: --- %s seconds ---" % (time.time() - absolute_start))
     # Generate coordinate system(120x120 array in which every value is a pair of coordinates(x,y))
-    cols = np.arange(center_x-window_adjusted, center_x+window_adjusted, window/y_pixels)
-    rows = np.arange(center_y+window_adjusted, center_y-window_adjusted, -window/x_pixels)
+    cols = np.arange(center_x-window_x, center_x+window_x, (window_x * 2)/x_pixels)
+    rows = np.arange(center_y+window_y, center_y-window_y, -(window_y * 2)/y_pixels)
     zetas = z_pixels
 
 
@@ -79,7 +80,7 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
     # Broadcast the position map onto a 100x120x120x2 array. It's one hundred of the array to individually calculate the distance for.
     # The first index is the number of pulse.
     # The rest of the array is dimension (120x120x2), representing ordered pairs.
-    position_map_3d = np.empty((num_scans, x_pixels, y_pixels, 3))
+    position_map_3d = np.empty((num_scans, y_pixels, x_pixels, 3))
     position_map_3d[:] = position_map
 
     print("Position map projected: --- %s seconds ---" % (time.time() - absolute_start))
@@ -88,7 +89,7 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
 
     # Convert platform_pos_2d into a 100x120x120x2 array to overlay over position map
     # It's basically the identical layer throughout the 100 pulses
-    platform_pos_3d = np.empty((num_scans, x_pixels, y_pixels, 3))
+    platform_pos_3d = np.empty((num_scans, y_pixels, x_pixels, 3))
     platform_pos_3d[:, :, :, :] = platform_pos[:, None, None, :]
 
     # With the platform_map_3d, and position_map_3d, we can generate the distance lookup table.
@@ -97,6 +98,8 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
                                     np.power((position_map_3d[..., 1] - platform_pos_3d[..., 1]), 2) + \
                                     np.power((position_map_3d[..., 2] - platform_pos_3d[..., 2]), 2))
 
+    # Generating SNR Multiplier map
+    #SNR_Multiplier
 
     print('distance_lookup_table')
     #Utilize the distance LUT to generate signal map.
@@ -109,7 +112,7 @@ def backproject_vectorize_real(data, dimension, ppm, extrapolate_pos=None, simul
         radar_counter += 1
 
     signal_matrix = np.abs(np.sum(signal_matrix, axis=0))
-    signal_matrix = np.reshape(signal_matrix, (x_pixels, y_pixels))
+    signal_matrix = np.reshape(signal_matrix, (y_pixels, x_pixels))
 
     #strength_array = np.transpose(strength_array)
     #array = np.asarray([[1, 2, 3], [4, 5, 6]])

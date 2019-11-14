@@ -260,7 +260,7 @@ def display_backprojected_image(backprojected_img, x_axis_bounds, y_axis_bounds,
     # Display the backprojected image
     hFig = plt.figure()
     hAx = plt.subplot(111)
-    hImg = hAx.imshow(backprojected_img, extent=x_axis_bounds + y_axis_bounds)
+    hImg = hAx.imshow(backprojected_img, extent=x_axis_bounds + y_axis_bounds, vmax = 10000000)
     hAx.set_aspect(aspect=aspect)
     hAx.set_xlabel(x_label)
     hAx.set_ylabel(y_label)
@@ -530,8 +530,8 @@ def main():
             center_input = (0, 0)
         print('CENTER:', center_input)
         # 2 indicates Backprojected data
-        #backprojected_image = backproject_vectorize_real(entry_data, (x_input, y_input), ppm_input, simulated=True, center=center_input)
-        #print('backprojected_image.shape:', backprojected_image.shape)
+        backprojected_image = backproject_vectorize_real(entry_data, (x_input, y_input), ppm_input, simulated=True, center=center_input)
+        print('backprojected_image.shape:', backprojected_image.shape)
         '''
         image_fig = plt.figure()
         #image_ax = image_fig.add_subplot(111)
@@ -543,8 +543,8 @@ def main():
         plt.colorbar()
         plt.show()
         '''
-        file_data = open('real_sar/real_image.pkl')
-        backprojected_image = pickle.load(file_data)
+        #file_data = open('real_sar/real_image.pkl')
+        #backprojected_image = pickle.load(file_data)
         display_backprojected_image(backprojected_image, (center_input[0]-(x_input/2), center_input[0]+(x_input/2)),
                                     (center_input[1]+(y_input/2), center_input[1]-(y_input/2)), args.path_to_master + '/' + 'final_image.png')
         window_x = x_input / 2

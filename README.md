@@ -12,7 +12,7 @@ As we no longer have the equipment that the code was built for, we have no feasi
 
 ## Authors
 
-* **Billie Thompson** - Portola High School - jimmykang1016@gmail.com 
+* **Minsoo Jimmy Kang** - Portola High School - jimmykang1016@gmail.com 
 * **Charlie Wu** - Thomas Jefferson High School
 * **Peter Huryn** - Bronx High School of Science
 

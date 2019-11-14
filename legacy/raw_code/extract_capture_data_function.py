@@ -9,10 +9,14 @@ def extract_capture_data(PICKLE_DATA_FILENAME):
         platform_pos = []
         motion_timestamps = []
         for x in a :
-            platform_pos.append([x[0][0], x[0][1], x[0][2]])
-            motion_timestamps.append(x[1])
-        # print(platform_pos)
-        # print(motion_timestamps)
+            if x[0][0] != "" :
+                platform_pos.append([float(x[0][0]), float(x[0][1]), float(x[0][2])])
+            else :
+                platform_pos.append([None, None, None])
+            motion_timestamps.append(float(x[1]))
+
+        print(platform_pos)
+        print(motion_timestamps)
         return (platform_pos, motion_timestamps)
 
 extract_capture_data("./mocap_data/trial_003.pkl")
